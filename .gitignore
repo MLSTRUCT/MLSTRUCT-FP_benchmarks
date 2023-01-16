@@ -1,0 +1,24 @@
+# Cache
+__pycache__
+
+# IDE
+.idea
+.vscode
+
+# Jupyter
+**.ipynb
+.ipyndb_checkpoints
+
+# Dataset
+dataset/
+
+# Build
+build/
+dist/
+*.egg-info
+
+# Other
+.db/
+_dev_*
+.old
+~$*
