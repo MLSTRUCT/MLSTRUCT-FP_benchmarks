@@ -14,7 +14,7 @@ with open('README.rst') as f:
 
 # Load requirements
 requirements = [
-    'MLStructFP'
+    'MLStructFP == 0.2.2'
 ]
 
 requirements_tests = requirements.copy()
