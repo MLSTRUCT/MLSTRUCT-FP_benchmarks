@@ -14,7 +14,9 @@ with open('README.rst') as f:
 
 # Load requirements
 requirements = [
-    'MLStructFP == 0.2.2'
+    'matplotlib == 3.5.3',
+    'MLStructFP == 0.2.6',
+    'numpy == 1.18.5'
 ]
 
 requirements_tests = requirements.copy()
