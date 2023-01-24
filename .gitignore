@@ -22,3 +22,6 @@ dist/
 _dev_*
 .old
 ~$*
+
+# Temporal ignore ml
+MLStructFP_benchmarks/ml

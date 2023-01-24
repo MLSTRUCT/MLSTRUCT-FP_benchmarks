@@ -5,6 +5,7 @@ Setup distribution.
 """
 
 # Library imports
+import os
 import MLStructFP_benchmarks
 from setuptools import setup, find_packages
 
@@ -14,10 +15,19 @@ with open('README.rst') as f:
 
 # Load requirements
 requirements = [
+    'Keras == 2.3.1',
+    'keras_tqdm == 2.0.1',
     'matplotlib == 3.5.3',
     'MLStructFP == 0.2.6',
     'numpy == 1.18.5'
 ]
+
+if os.environ.get('GITHUB') != 'true':
+    for r in [
+        'tensorboard == 2.2.2',
+        'tensorflow-gpu == 2.2.2'  # Check https://www.tensorflow.org/install/gpu. Needs CUDA 10.1 + cuDNN 7.6.5
+    ]:
+        requirements.append(r)
 
 requirements_tests = requirements.copy()
 requirements_tests.extend([
