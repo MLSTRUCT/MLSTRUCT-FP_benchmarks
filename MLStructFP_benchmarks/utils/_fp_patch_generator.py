@@ -14,7 +14,6 @@ storage object npz, which can be re-loaded to train the models.
 
 __all__ = ['FloorPatchGenerator']
 
-from MLStructFP.db import Floor
 from MLStructFP.db.image import RectBinaryImage, RectFloorPhoto
 from MLStructFP.utils import *
 
@@ -23,8 +22,11 @@ import matplotlib.pyplot as plt
 import math
 import numpy as np
 
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, TYPE_CHECKING, Union
 from warnings import warn
+
+if TYPE_CHECKING:
+    from MLStructFP.db import Floor
 
 PatchRectType = List[Tuple[int, bool, float, float, float, float]]
 
@@ -40,18 +42,19 @@ class FloorPatchGenerator(object):
     _gen_photo: 'RectFloorPhoto'
     _img_size: int
     _min_binary_area: float
-    _patch_size: float
     _patch_binary: List['np.ndarray']
     _patch_photo: List['np.ndarray']
+    _patch_size: float
     _test_ignored_patches: List[int]
+    _test_last_added: int
 
     def __init__(
             self,
             image_size: int,
             patch_size: float,
             bw: bool,
-            delta_x: Optional[List[float]] = None,
-            delta_y: Optional[List[float]] = None,
+            delta_x: Optional[Union[List[float], Tuple[float, ...]]] = None,
+            delta_y: Optional[Union[List[float], Tuple[float, ...]]] = None,
             min_binary_area: float = 0
     ) -> None:
         """
@@ -70,6 +73,10 @@ class FloorPatchGenerator(object):
             delta_x = [0]
         if delta_y is None:
             delta_y = [0]
+        if isinstance(delta_x, tuple):
+            delta_x = list(delta_x)
+        if isinstance(delta_y, tuple):
+            delta_y = list(delta_y)
         assert isinstance(delta_x, list), 'delta x must be an increasing list of float values between -0.5 to 0.5'
         assert isinstance(delta_y, list), 'delta y must be an increasing list of float values between -0.5 to 0.5'
         lx, ly = len(delta_x), len(delta_y)
@@ -99,10 +106,11 @@ class FloorPatchGenerator(object):
         self._gen_binary = RectBinaryImage(image_size_px=image_size)
         self._gen_photo = RectFloorPhoto(image_size_px=image_size, empty_color=0)
         self._min_binary_area = min_binary_area
-        self._patch_size = patch_size
         self._patch_binary = []
         self._patch_photo = []
+        self._patch_size = patch_size
         self._test_ignored_patches = []
+        self._test_last_added = 0
 
     def _process_photo(self, xmin: float, xmax: float, ymin: float, ymax: float, floor: 'Floor') -> 'np.ndarray':
         """
@@ -160,6 +168,8 @@ class FloorPatchGenerator(object):
         """
         self._patch_binary.clear()
         self._patch_photo.clear()
+        self._test_ignored_patches.clear()
+        self._test_last_added = 0
         gc.collect()
         return self
 
@@ -172,7 +182,7 @@ class FloorPatchGenerator(object):
         """
         self._test_ignored_patches.clear()
         self._gen_binary.init()
-        self._gen_photo.close()
+        added = 0
         for p in self._make_patches(floor, apply_delta=True):
             ignore = False
             n, origin, xmin, xmax, ymin, ymax = p
@@ -200,11 +210,15 @@ class FloorPatchGenerator(object):
                 self._test_ignored_patches.append(n)
                 continue
 
-            # print(len(self._patch_photo), n, sp, sb)
             self._patch_binary.append(patch_b)
             self._patch_photo.append(patch_p)
+            added += 1
 
+        self._test_last_added = added
+        self._gen_binary.close()
+        self._gen_photo.close()
         self._gen_binary.restore_plot()
+
         return self
 
     def plot_patch(self, idx: int) -> None:
