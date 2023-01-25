@@ -29,12 +29,6 @@ if os.environ.get('GITHUB') != 'true':
     ]:
         requirements.append(r)
 
-requirements_tests = requirements.copy()
-requirements_tests.extend([
-    'codecov',
-    'nose2'
-])
-
 # Setup library
 setup(
     author=MLStructFP_benchmarks.__author__,
@@ -54,7 +48,7 @@ setup(
     include_package_data=True,
     install_requires=requirements,
     extras_require={
-        'test': requirements_tests
+        'test': ['codecov', 'nose2']
     },
     keywords=MLStructFP_benchmarks.__keywords__,
     name='MLStructFP-benchmarks',

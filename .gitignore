@@ -1,12 +1,12 @@
 # Cache
-__pycache__
+__pycache__/
 
 # IDE
-.idea
-.vscode
+.idea/
+.vscode/
 
 # Jupyter
-.ipynb_checkpoints
+.ipynb_checkpoints/
 *.ipynb
 
 # Dataset
@@ -18,10 +18,10 @@ dist/
 *.egg-info
 
 # Other
-.db/
 _dev_*
-.old
+.db/
+.old/
 ~$*
 
 # Temporal ignore ml
-MLStructFP_benchmarks/ml
+MLStructFP_benchmarks/ml/
