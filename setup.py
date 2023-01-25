@@ -18,7 +18,7 @@ requirements = [
     'Keras == 2.3.1',
     'keras_tqdm == 2.0.1',
     'matplotlib == 3.5.3',
-    'MLStructFP == 0.2.6',
+    'MLStructFP == 0.3.0',
     'numpy == 1.18.5'
 ]
 

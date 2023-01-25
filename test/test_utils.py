@@ -20,7 +20,15 @@ class UtilsTest(unittest.TestCase):
         Test patch generator.
         """
         db = DbLoader(DB_PATH)
-        patchgen = FloorPatchGenerator(image_size=64, patch_size=10)
+        patchgen = FloorPatchGenerator(bw=True, image_size=64, patch_size=10)
 
-        patchgen.process(db.floors[0])
-        patchgen.plot_patches(db.floors[0])
+        floor = db.floors[0]
+        patchgen.process(floor)
+        self.assertEqual(len(patchgen._make_patches(floor)), 40)
+        self.assertEqual(patchgen._test_ignored_patches,
+                         [5, 16, 17, 18, 21, 22, 23, 26, 27, 28, 31, 32, 33, 35, 36, 37, 38, 40])
+
+        # Test plots
+        patchgen.plot_patches(floor)
+        patchgen.plot_patch(0)
+        self.assertEqual(len(patchgen._patch_photo), 22)
