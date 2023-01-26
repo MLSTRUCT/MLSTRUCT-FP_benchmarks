@@ -21,6 +21,7 @@ dist/
 _dev_*
 .db/
 .old/
+.out/
 ~$*
 
 # Temporal ignore ml
