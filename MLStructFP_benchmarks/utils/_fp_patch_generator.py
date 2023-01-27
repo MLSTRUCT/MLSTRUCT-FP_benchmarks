@@ -15,7 +15,9 @@ storage object npz, which can be re-loaded to train the models.
 __all__ = ['FloorPatchGenerator']
 
 from MLStructFP.db.image import RectBinaryImage, RectFloorPhoto
-from MLStructFP.utils import *
+# noinspection PyProtectedMember
+from MLStructFP.db.image._rect_photo import RectFloorShapeException
+from MLStructFP.utils import DEFAULT_PLOT_DPI, configure_figure
 
 import gc
 import matplotlib.pyplot as plt
@@ -40,6 +42,7 @@ class FloorPatchGenerator(object):
     _dy: List[float]
     _gen_binary: 'RectBinaryImage'
     _gen_photo: 'RectFloorPhoto'
+    _image_size: int
     _img_size: int
     _min_binary_area: float
     _patch_binary: List['np.ndarray']
@@ -103,6 +106,7 @@ class FloorPatchGenerator(object):
         self._bw = bw
         self._dx = delta_x
         self._dy = delta_y
+        self._image_size = image_size
         self._gen_binary = RectBinaryImage(image_size_px=image_size)
         self._gen_photo = RectFloorPhoto(image_size_px=image_size, empty_color=0)
         self._min_binary_area = min_binary_area
@@ -187,7 +191,11 @@ class FloorPatchGenerator(object):
             ignore = False
             n, origin, xmin, xmax, ymin, ymax = p
             patch_b = self._gen_binary.make_region(xmin, xmax, ymin, ymax, floor)[1]
-            patch_p = self._process_photo(xmin, xmax, ymin, ymax, floor)
+            try:
+                patch_p = self._process_photo(xmin, xmax, ymin, ymax, floor)
+            except RectFloorShapeException:  # Try to crop a larger plan
+                ignore = True
+                patch_p = patch_b
             sb, sp = np.sum(patch_b), np.sum(patch_p)
 
             # Avoid save empty data

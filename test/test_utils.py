@@ -8,7 +8,7 @@ import os
 import unittest
 
 from MLStructFP.db import DbLoader
-from MLStructFP_benchmarks.utils import FloorPatchGenerator
+from MLStructFP_benchmarks.utils import FloorPatchGenerator, FPDatasetGenerator
 
 DB_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data', 'fp.json')
 
@@ -32,3 +32,14 @@ class UtilsTest(unittest.TestCase):
         patchgen.plot_patches(floor)
         patchgen.plot_patch(0)
         self.assertEqual(len(patchgen._patch_photo), 22)
+
+    def test_fp_db_generator(self) -> None:
+        """
+        Tests db generator.
+        """
+        db = DbLoader(DB_PATH)
+        dbgen = FPDatasetGenerator(64, 20)
+        dbgen.process_dataset(db, '.out/test', rotation_angles=(0,))
+        for f in db.floors:
+            self.assertTrue(os.path.isfile(f'.out/test_{f.id}_binary.npz'))
+            self.assertTrue(os.path.isfile(f'.out/test_{f.id}_photo.npz'))
