@@ -115,7 +115,7 @@ class FPDatasetGenerator(object):
         t = len(db.floors)
         print(f'Total floors to compute in parallel: {t}')
         print(f'Using up to {num_proc}/{cpu_count()} CPUs')
-        print(f'Using export path: {path}, compressed: {compressed}, image size: {isz}, patch size: {psz}')
+        print(f'Using export path: {path}, compressed: {compressed}, image size: {isz}px, patch size: {psz}m')
         pool = Pool(processes=num_proc)
         results = pool.map(functools.partial(
             _process_fp_dataset_mp, db=db, isz=isz, psz=psz, bw=self._gen._bw,
