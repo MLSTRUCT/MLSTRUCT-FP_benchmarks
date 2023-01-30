@@ -30,7 +30,7 @@ RotationAnglesType = Union[Tuple[int, ...], List[int]]
 
 
 def _process_fp_dataset_mp(i: int, db: 'DbLoader', isz: int, psz: float, bw: bool,
-                           dx: DeltaPatchType, dy: DeltaPatchType, p: str, c: bool, r: RotationAnglesType) -> None:
+                           dx: DeltaPatchType, dy: DeltaPatchType, p: str, c: bool, r: RotationAnglesType) -> Tuple[int, int]:
     """
     Process FP in parallel.
 
@@ -44,13 +44,15 @@ def _process_fp_dataset_mp(i: int, db: 'DbLoader', isz: int, psz: float, bw: boo
     :param p: Export path
     :param c: Use compressed export
     :param r: Rotation angles
+    :return: Number of (added, ignored) patches
     """
     floors = db.floors
     print(f'Processing floor {i + 1}/{len(floors)}')
     gen = FPDatasetGenerator(image_size=isz, patch_size=psz, bw=bw, delta_x=dx, delta_y=dy)
-    gen.process_floor(floors[i], rotation_angles=r, verbose=False)
-    gen.export(path=f'{p}_{floors[i].id}', compressed=c)
+    nb = gen.process_floor(floors[i], rotation_angles=r, verbose=False)
+    gen.export(path=f'{p}{floors[i].id}', compressed=c)
     del gen
+    return nb
 
 
 class FPDatasetGenerator(object):
@@ -87,13 +89,14 @@ class FPDatasetGenerator(object):
         )
         self._processed_floor = []
 
+    # noinspection PyProtectedMember
     def process_dataset(
             self,
             db: 'DbLoader',
             path: str,
             compressed: bool = True,
             rotation_angles: RotationAnglesType = DEFAULT_ROTATION_ANGLES,
-            **kwargs) -> None:
+            **kwargs) -> List[Tuple[int, int]]:
         """
         Exports a dataset in parallel (each floor is exported indepently).
 
@@ -102,34 +105,42 @@ class FPDatasetGenerator(object):
         :param compressed: Save compressed file
         :param rotation_angles: Which rotation angles are applied to the floor plan
         :param kwargs: Optional keyword arguments
+        :return: List of (added, ignored) patches for each floor in the dataset
         """
         num_proc = kwargs.get('num_thread_processes', 8)
         t0 = time.time()
         num_proc = min(num_proc, cpu_count())
+        isz, psz = self._gen._image_size, self._gen._patch_size
 
         t = len(db.floors)
         print(f'Total floors to compute in parallel: {t}')
         print(f'Using up to {num_proc}/{cpu_count()} CPUs')
-        print(f'Using export path: {path}, compressed: {compressed}')
+        print(f'Using export path: {path}, compressed: {compressed}, image size: {isz}, patch size: {psz}')
         pool = Pool(processes=num_proc)
-        # noinspection PyProtectedMember
-        pool.map(functools.partial(_process_fp_dataset_mp, db=db, isz=self._gen._image_size, psz=self._gen._patch_size, bw=self._gen._bw,
-                                   dx=self._gen._dx, dy=self._gen._dy, p=path, c=compressed, r=rotation_angles), range(t))
+        results = pool.map(functools.partial(
+            _process_fp_dataset_mp, db=db, isz=isz, psz=psz, bw=self._gen._bw,
+            dx=self._gen._dx, dy=self._gen._dy, p=path, c=compressed, r=rotation_angles), range(t))
         pool.close()
         pool.join()
         total_time = time.time() - t0
+        added, ignored = 0, 0
+        for r in results:
+            added += r[0]
+            ignored += r[1]
         print(f'Pool finished, total time: {datetime.timedelta(seconds=int(total_time))}')
+        print(f'Added patches: {added}, ignored: {ignored}. Ratio: {100 * added / (added + ignored):.1f}%')
         gc.collect()
+        return results
 
     # noinspection PyProtectedMember
-    def process_floor(self, floor: 'Floor', rotation_angles: RotationAnglesType = DEFAULT_ROTATION_ANGLES, **kwargs) -> int:
+    def process_floor(self, floor: 'Floor', rotation_angles: RotationAnglesType = DEFAULT_ROTATION_ANGLES, **kwargs) -> Tuple[int, int]:
         """
         Process a given floor.
 
         :param floor: Floor to process
         :param kwargs: Keyword optional arguments
         :param rotation_angles: Which rotation angles are applied to the floor plan
-        :returns: Number of added patches
+        :returns: Number of (added, ignored) patches
         """
         if floor.id in self._processed_floor:
             raise ValueError(f'Floor ID {floor.id} already processed')
@@ -154,7 +165,7 @@ class FPDatasetGenerator(object):
             print(f'\tFinished in {time.time() - t0:.2f} seconds. Added: {added}, ignored: {ignored}')
         self._processed_floor.append(floor.id)
 
-        return added
+        return added, ignored
 
     # noinspection PyProtectedMember
     def export(self, path: str, compressed: bool = True) -> None:
