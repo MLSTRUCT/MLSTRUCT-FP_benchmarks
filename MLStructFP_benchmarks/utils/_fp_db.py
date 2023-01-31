@@ -111,15 +111,17 @@ class FPDatasetGenerator(object):
         t0 = time.time()
         num_proc = min(num_proc, cpu_count())
         isz, psz = self._gen._image_size, self._gen._patch_size
+        bw, dx, dy = self._gen._bw, self._gen._dx, self._gen._dy
 
         t = len(db.floors)
         print(f'Total floors to compute in parallel: {t}')
         print(f'Using up to {num_proc}/{cpu_count()} CPUs')
         print(f'Using export path: {path}, compressed: {compressed}, image size: {isz}px, patch size: {psz}m')
+        print(f'Crop delta x: {dx}, delta y: {dy}, black/white: {bw}')
         pool = Pool(processes=num_proc)
         results = pool.map(functools.partial(
-            _process_fp_dataset_mp, db=db, isz=isz, psz=psz, bw=self._gen._bw,
-            dx=self._gen._dx, dy=self._gen._dy, p=path, c=compressed, r=rotation_angles), range(t))
+            _process_fp_dataset_mp, db=db, isz=isz, psz=psz, bw=bw,
+            dx=dx, dy=dy, p=path, c=compressed, r=rotation_angles), range(t))
         pool.close()
         pool.join()
         total_time = time.time() - t0
