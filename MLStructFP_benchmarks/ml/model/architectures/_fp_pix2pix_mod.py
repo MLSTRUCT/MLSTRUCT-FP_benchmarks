@@ -30,8 +30,6 @@ import traceback
 if TYPE_CHECKING:
     from ml.model.core import DataFloorPhoto
 
-_DIR_ATOB: str = 'AtoB'
-_DIR_BTOA: str = 'BtoA'
 _DISCRIMINATOR_LOSS: str = 'binary_crossentropy'  # 'binary_crossentropy'
 
 
@@ -53,8 +51,8 @@ class Pix2PixFloorPhotoModModel(GenericModel):
     _path_logs: str  # Stores path logs
     _train_current_part: int
     _train_date: str
-    _x: 'np.ndarray'  # Loaded data # a
-    _y: 'np.ndarray'  # Loaded data # b
+    _x: 'np.ndarray'
+    _y: 'np.ndarray'
 
     # Model properties
     _gf: int
@@ -77,7 +75,6 @@ class Pix2PixFloorPhotoModModel(GenericModel):
             self,
             data: Optional['DataFloorPhoto'],
             name: str,
-            direction: str,
             image_shape: Optional[Tuple[int, int, int]] = None,
             **kwargs
     ) -> None:
@@ -86,12 +83,9 @@ class Pix2PixFloorPhotoModModel(GenericModel):
 
         :param data: Model data
         :param name: Model name
-        :param direction: AtoB, BtoA
         :param image_shape: Input shape
         :param kwargs: Optional keyword arguments
         """
-        assert direction in [_DIR_ATOB, _DIR_BTOA], \
-            f'Invalid direction, use "{_DIR_ATOB}" or "{_DIR_BTOA}"'
 
         # Load data
         GenericModel.__init__(self, name=name, path=kwargs.get('path', ''))
@@ -100,7 +94,7 @@ class Pix2PixFloorPhotoModModel(GenericModel):
 
         # Input shape
         if data is not None:
-            assert data.__class__.__name__ == 'DataFloorPhotoXY', \
+            assert data.__class__.__name__ == 'DataFloorPhoto', \
                 f'Invalid data class <{data.__class__.__name__}>'
             self._data = data
             self._image_shape = data.get_image_shape()
@@ -111,7 +105,6 @@ class Pix2PixFloorPhotoModModel(GenericModel):
             assert image_shape[0] == image_shape[1]
             self._image_shape = image_shape
 
-        self._dir = direction
         self._img_rows = self._image_shape[0]
         self._img_cols = self._image_shape[1]
         self._channels = self._image_shape[2]
@@ -122,7 +115,6 @@ class Pix2PixFloorPhotoModModel(GenericModel):
         self._info(f'Direction {self._dir}')
 
         # Register constructor
-        self._register_session_data('dir', direction)
         self._register_session_data('image_shape', self._image_shape)
 
         # Calculate output shape of D (PatchGAN)
@@ -488,13 +480,7 @@ class Pix2PixFloorPhotoModModel(GenericModel):
 
         total_parts = self._data.total_parts
         assert 1 <= part <= total_parts
-        _crop_len: int = 0  # Crop to size
-        _scale_to_1: bool = True  # Crop to scale
 
-        if _crop_len != 0:
-            print(f'Cropping: {_crop_len} elements')
-        if not _scale_to_1:
-            print('Scale to (-1,1) is disabled')
         if not shuffle:
             print('Data is not shuffled')
 
@@ -502,25 +488,14 @@ class Pix2PixFloorPhotoModModel(GenericModel):
         if hasattr(self, '_x'):
             del self._x, self._y
 
-        print(f'Loading data part {part}/{total_parts}', end='')
-        part_data = self._data.load_part(part=part, xy='y', shuffle=False)
-        xtrain_img: 'np.ndarray' = part_data['y_rect'].copy()  # Unscaled, from range (0,255)
-        ytrain_img: 'np.ndarray' = part_data['y_fphoto'].copy()  # Unscaled, from range (0, 255)
-        del part_data
+        print(f'Loading data part {part}/{total_parts}')
+        part_data = self._data.load_part(part=part, shuffle=True)
+        xtrain_img: 'np.ndarray' = part_data['photo']
+        ytrain_img: 'np.ndarray' = part_data['binary']
         _free()
 
-        # Crop data
-        if _crop_len != 0:
-            _cr = min(_crop_len, len(xtrain_img))
-            xtrain_img, ytrain_img = xtrain_img[0:_cr], ytrain_img[0:_cr]
-
-        if self._dir == _DIR_ATOB:
-            self._y = xtrain_img
-            self._x = ytrain_img
-        elif self._dir == _DIR_BTOA:
-            self._x = xtrain_img
-            self._y = ytrain_img
-        print('')
+        self._x = xtrain_img
+        self._y = ytrain_img
 
         if not hasattr(self, '_history') or len(self._history.keys()) == 0:
             self._history = {
@@ -535,7 +510,7 @@ class Pix2PixFloorPhotoModModel(GenericModel):
         try:
             for epoch in range(epochs):
                 for batch_i, (imgs_A, imgs_B) in enumerate(
-                        self._load_batch(batch_size=batch_size, scale_to_1=_scale_to_1, shuffle=shuffle)
+                        self._load_batch(batch_size=batch_size, scale_to_1=False, shuffle=shuffle)
                 ):
 
                     # ---------------------

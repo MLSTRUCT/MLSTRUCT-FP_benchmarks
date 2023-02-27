@@ -48,7 +48,6 @@ class Pix2PixFloorPhotoModel(GenericModel):
     """
     _data: 'DataFloorPhoto'
     _samples: Dict[int, Dict[str, 'np.ndarray']]  # Samples for each part
-    _xy: str
 
     # Train
     _current_train_date: str
@@ -70,7 +69,6 @@ class Pix2PixFloorPhotoModel(GenericModel):
             self,
             data: Optional['DataFloorPhoto'],
             name: str,
-            xy: str,
             image_shape: Optional[Tuple[int, int, int]] = None,
             **kwargs
     ) -> None:
@@ -79,11 +77,9 @@ class Pix2PixFloorPhotoModel(GenericModel):
 
         :param data: Model data
         :param name: Model name
-        :param xy: Which data use, if "x" learn from Architectural pictures, "y" from Structure
         :param image_shape: Input shape
         :param kwargs: Optional keyword arguments
         """
-        assert xy in ['x', 'y'], 'Invalid xy, use "x" or "y"'
 
         # Load data
         GenericModel.__init__(self, name=name, path=kwargs.get('path', ''))
@@ -92,7 +88,7 @@ class Pix2PixFloorPhotoModel(GenericModel):
 
         # Input shape
         if data is not None:
-            assert data.__class__.__name__ == 'DataFloorPhotoXY', \
+            assert data.__class__.__name__ == 'DataFloorPhoto', \
                 f'Invalid data class <{data.__class__.__name__}>'
             self._data = data
             self._image_shape = data.get_image_shape()
@@ -107,11 +103,8 @@ class Pix2PixFloorPhotoModel(GenericModel):
         self._info(f'Image shape {self._image_shape}')
 
         self._samples = {}
-        self._xy = xy
-        self._info(f'Learning representation from {xy}')
 
         # Register constructor data
-        self._register_session_data('xy', xy)
         self._register_session_data('image_shape', self._image_shape)
 
         # Number of filters in the first layer of G and D
@@ -596,6 +589,7 @@ class Pix2PixFloorPhotoModel(GenericModel):
         # Get initial parts
         init_part = kwargs.get('init_part', 1)
         assert isinstance(init_part, int)
+        verbose = self._verbose
 
         # The idea is to train using each part of the data, metrics will not be evaluated
         total_parts: int = self._data.total_parts
@@ -620,56 +614,25 @@ class Pix2PixFloorPhotoModel(GenericModel):
         if n_parts != -1:
             print(f'Number of parts to be processed: {n_parts}')
 
-        _crop_len = 500
-        if _crop_len != 0:
-            print(f'Cropping: {_crop_len} elements')
-
-        _scale_to_1 = True
-        if not _scale_to_1:
-            print('Scale to (-1,1) is disabled')
-
         npt = 0  # Number of processed parts
         for i in range(total_parts):
+            if i > 0:
+                self._verbose = False
             part = i + 1
             if part < init_part:
                 continue
 
-            print(f'Loading data part {part}/{total_parts}', end='')
-            part_data = self._data.load_part(part=part, xy=self._xy, remove_null=True, shuffle=False)
-            xtrain_img_u: 'np.ndarray' = part_data[self._xy + '_rect'].copy()  # Unscaled, from range (0,255)
-            ytrain_img_u: 'np.ndarray' = part_data[self._xy + '_fphoto'].copy()  # Unscaled, from range (0, 255)
-            del part_data
-
-            # Crop data
-            if _crop_len != 0:
-                _cr = min(_crop_len, len(xtrain_img_u))
-                xtrain_img_u, ytrain_img_u = xtrain_img_u[0:_cr], ytrain_img_u[0:_cr]
-
-            ytrain_label = self.generate_true_labels(len(ytrain_img_u))
+            print(f'Loading data part {part}/{total_parts}')
+            part_data = self._data.load_part(part=part, shuffle=True)
+            xtrain_img: 'np.ndarray' = part_data['photo']
+            ytrain_img: 'np.ndarray' = part_data['binary']
+            ytrain_label = self.generate_true_labels(len(ytrain_img))
             _free()
 
             # Make sample inputs
-            sample_id = np.random.randint(0, len(xtrain_img_u), n_samples)
-            sample_input = xtrain_img_u[sample_id]
-            sample_real = ytrain_img_u[sample_id]
-
-            # Convert images to range (-1, 1)
-            if _scale_to_1:
-                print(', scaling x', end='')
-                xtrain_img = scale_array_to_range(xtrain_img_u, (-1, 1), 'int8')  # Rect images to range (-1, 1)
-                del xtrain_img_u
-                _free()
-            else:
-                xtrain_img = xtrain_img_u
-
-            if _scale_to_1:
-                print(', scaling y', end='')
-                ytrain_img = scale_array_to_range(ytrain_img_u, (-1, 1), 'float32')  # Floor photo to range (-1, 1)
-                del ytrain_img_u
-                _free()
-            else:
-                ytrain_img = ytrain_img_u
-            print(': OK')
+            sample_id = np.random.randint(0, len(xtrain_img), n_samples)
+            sample_input = xtrain_img[sample_id]
+            sample_real = ytrain_img[sample_id]
 
             self._samples[part] = {
                 'input': sample_input,
@@ -696,6 +659,7 @@ class Pix2PixFloorPhotoModel(GenericModel):
             _free()
             if not self._is_trained:
                 print('Train failed, stopping')
+                self._verbose = verbose
                 return
 
             # Predict samples
@@ -713,6 +677,9 @@ class Pix2PixFloorPhotoModel(GenericModel):
             if npt == n_parts:
                 print(f'Reached number of parts to be processed ({n_parts}), train has finished')
                 break
+
+        # Restore verbose
+        self._verbose = verbose
 
     def predict_image(self, img: 'np.ndarray') -> 'np.ndarray':
         """

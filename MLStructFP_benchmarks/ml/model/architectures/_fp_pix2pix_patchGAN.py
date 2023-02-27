@@ -33,9 +33,6 @@ import traceback
 if TYPE_CHECKING:
     from ml.model.core import DataFloorPhoto
 
-_DIR_ATOB: str = 'AtoB'
-_DIR_BTOA: str = 'BtoA'
-
 
 def _free() -> None:
     """
@@ -389,9 +386,8 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
     _path_logs: str  # Stores path logs
     _train_current_part: int
     _train_date: str
-    _x: 'np.ndarray'  # Loaded data # a
-    _xy: str
-    _y: 'np.ndarray'  # Loaded data # b
+    _x: 'np.ndarray'
+    _y: 'np.ndarray'
 
     # Model properties
     _out_d_patch: int
@@ -415,8 +411,6 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
             self,
             data: Optional['DataFloorPhoto'],
             name: str,
-            xy: str,
-            direction: str,
             image_shape: Optional[Tuple[int, int, int]] = None,
             **kwargs
     ) -> None:
@@ -425,14 +419,10 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
 
         :param data: Model data
         :param name: Model name
-        :param xy: Which data use, if "x" learn from Architectural pictures, "y" from Structure
         :param direction: AtoB, BtoA
         :param image_shape: Input shape
         :param kwargs: Optional keyword arguments
         """
-        assert xy in ['x', 'y'], 'Invalid xy, use "x" or "y"'
-        assert direction in [_DIR_ATOB, _DIR_BTOA], \
-            f'Invalid direction, use "{_DIR_ATOB}" or "{_DIR_BTOA}"'
 
         # Load data
         GenericModel.__init__(self, name=name, path=kwargs.get('path', ''))
@@ -441,7 +431,7 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
 
         # Input shape
         if data is not None:
-            assert data.__class__.__name__ == 'DataFloorPhotoXY', \
+            assert data.__class__.__name__ == 'DataFloorPhoto', \
                 f'Invalid data class <{data.__class__.__name__}>'
             self._data = data
             self._image_shape = data.get_image_shape()
@@ -452,8 +442,6 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
             assert image_shape[0] == image_shape[1]
             self._image_shape = image_shape
 
-        self._dir = direction
-        self._xy = xy
         self._img_rows = self._image_shape[0]
         self._img_cols = self._image_shape[1]
         self._channels = self._image_shape[2]
@@ -462,12 +450,9 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
         assert self._channels >= 1
 
         self._info(f'Direction {self._dir}')
-        self._info(f'Learning representation from {xy}')
 
         # Register constructor
-        self._register_session_data('dir', direction)
         self._register_session_data('image_shape', self._image_shape)
-        self._register_session_data('xy', xy)
 
         # Calculate output shape of D
         self._out_d_patch = 2  # It must be 2, [0, 1] or [1, 0]
@@ -749,7 +734,7 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
         :param part_to: To part, if -1 train to last
         """
         self._train_date = datetime.datetime.today().strftime('%Y%m%d%H%M%S')  # Initial train date
-        total_parts = self._data.total_parts()
+        total_parts = self._data.total_parts
         if part_to == -1:
             part_to = total_parts
         assert 1 <= part_from < part_to <= total_parts
@@ -801,7 +786,7 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
             self._train_date = datetime.datetime.today().strftime('%Y%m%d%H%M%S')
         self._train_current_part = part
 
-        total_parts = self._data.total_parts()
+        total_parts = self._data.total_parts
         assert 1 <= part <= total_parts
         _crop_len: int = 0  # Crop to size
         _scale_to_1: bool = True  # Crop to scale
@@ -818,24 +803,13 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
             del self._x, self._y
 
         print(f'Loading data part {part}/{total_parts}', end='')
-        part_data = self._data.load_part(part=part, xy=self._xy, remove_null=True, shuffle=False)
-        xtrain_img: 'np.ndarray' = part_data[self._xy + '_rect'].copy()  # Unscaled, from range (0,255)
-        ytrain_img: 'np.ndarray' = part_data[self._xy + '_fphoto'].copy()  # Unscaled, from range (0, 255)
-        del part_data
+        part_data = self._data.load_part(part=part, shuffle=True)
+        xtrain_img: 'np.ndarray' = part_data['photo']
+        ytrain_img: 'np.ndarray' = part_data['binary']
         _free()
 
-        # Crop data
-        if _crop_len != 0:
-            _cr = min(_crop_len, len(xtrain_img))
-            xtrain_img, ytrain_img = xtrain_img[0:_cr], ytrain_img[0:_cr]
-
-        if self._dir == _DIR_ATOB:
-            self._y = xtrain_img
-            self._x = ytrain_img
-        elif self._dir == _DIR_BTOA:
-            self._x = xtrain_img
-            self._y = ytrain_img
-        print('')
+        self._x = xtrain_img
+        self._y = ytrain_img
 
         if not hasattr(self, '_history') or len(self._history.keys()) == 0:
             self._history = {

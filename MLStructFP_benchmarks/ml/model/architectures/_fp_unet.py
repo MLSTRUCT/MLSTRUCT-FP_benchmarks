@@ -215,7 +215,7 @@ class UNETFloorPhotoModel(GenericModel):
                 continue
 
             print(f'Loading data part {part}/{total_parts}')
-            part_data = self._data.load_part(part=part, shuffle=False)
+            part_data = self._data.load_part(part=part, shuffle=True)
             xtrain_img: 'np.ndarray' = part_data['photo']
             ytrain_img: 'np.ndarray' = part_data['binary']
 
