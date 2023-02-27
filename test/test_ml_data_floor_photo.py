@@ -30,8 +30,15 @@ class UtilsTest(unittest.TestCase):
         data = DataFloorPhoto(self._out, shuffle_parts=False)
         self.assertEqual(data.total_parts, 7)
         self.assertEqual(data.get_image_shape(), (128, 128, 1))
-        data.plot_image_example_id(data.load_part(1, False), 0, show=False)
+
+        # Get part
         self.assertEqual(data._parts, [302, 748, 848, 966, 1058, 1059, 1060])
+        p = data.load_part(1, False)
+        for t in ('binary', 'photo'):
+            self.assertEqual(p[t].shape, (90, 128, 128, 1))
+
+        # Plot
+        data.plot_image_example_id(p, 0, show=False)
 
     def test_session(self) -> None:
         """

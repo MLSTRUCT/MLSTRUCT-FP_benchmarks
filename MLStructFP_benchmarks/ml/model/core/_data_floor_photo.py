@@ -10,7 +10,7 @@ __all__ = [
     'load_floor_photo_data_from_session'
 ]
 
-from MLStructFP.utils import DEFAULT_PLOT_DPI, configure_figure
+from MLStructFP.utils import DEFAULT_PLOT_DPI, configure_figure, make_dirs
 
 from datetime import datetime
 from typing import List, Dict, Tuple, Any
@@ -142,7 +142,7 @@ class DataFloorPhoto(object):
 
         :param part: Num part
         :param shuffle: Shuffle data order
-        :return: Binary/Photo data
+        :return: Binary/Photo data. Images are within (0, 1) range
         """
         assert 1 <= part <= self.total_parts, f'Number of parts overflow, min:1, max:{self.total_parts}'
         f = self._get_file(self._parts[part - 1])
@@ -156,8 +156,16 @@ class DataFloorPhoto(object):
             img_p = np.array(img_p, dtype=_DATA_DTYPE)
 
         # Check length is the same
-        assert img_b.shape == img_p.shape, \
-            f'Part {part} image shape from binary/photo differs, value binary: {img_b.shape}, photo: {img_p.shape}'
+        s_b = img_b.shape
+        s_p = img_p.shape
+        assert s_b == s_p, \
+            f'Part {part} image shape from binary/photo differs, value binary: {s_b}, photo: {s_p}'
+        s = s_b
+
+        # Assert shape for 1-channel image
+        if len(s) == 3:
+            img_b = img_b.reshape((*s, 1))
+            img_p = img_p.reshape((*s, 1))
 
         # Shuffle
         if shuffle:
@@ -227,6 +235,7 @@ class DataFloorPhoto(object):
         filename = os.path.splitext(filename)[0]
         if '.json' not in filename:
             filename += '.json'
+        make_dirs(filename)
         with open(filename, 'w', encoding='utf-8') as fp:
             data = {
 
