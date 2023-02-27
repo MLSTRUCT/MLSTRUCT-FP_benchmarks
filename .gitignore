@@ -23,6 +23,3 @@ _dev_*
 .old/
 .out/
 ~$*
-
-# Temporal ignore ml
-MLStructFP_benchmarks/ml/
