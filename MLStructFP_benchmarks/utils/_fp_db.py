@@ -30,7 +30,7 @@ RotationAnglesType = Union[Tuple[int, ...], List[int]]
 
 
 def _process_fp_dataset_mp(i: int, db: 'DbLoader', isz: int, psz: float, bw: bool,
-                           dx: DeltaPatchType, dy: DeltaPatchType, p: str, c: bool, r: RotationAnglesType) -> Tuple[int, int]:
+                           dx: DeltaPatchType, dy: DeltaPatchType, p: str, r: RotationAnglesType) -> Tuple[int, int]:
     """
     Process FP in parallel.
 
@@ -42,7 +42,6 @@ def _process_fp_dataset_mp(i: int, db: 'DbLoader', isz: int, psz: float, bw: boo
     :param dx: Delta crops/sliding-window for each patch on x-axis
     :param dy: Delta crops/sliding-window for each patch on y-axis
     :param p: Export path
-    :param c: Use compressed export
     :param r: Rotation angles
     :return: Number of (added, ignored) patches
     """
@@ -50,7 +49,7 @@ def _process_fp_dataset_mp(i: int, db: 'DbLoader', isz: int, psz: float, bw: boo
     print(f'Processing floor {i + 1}/{len(floors)}')
     gen = FPDatasetGenerator(image_size=isz, patch_size=psz, bw=bw, delta_x=dx, delta_y=dy)
     nb = gen.process_floor(floors[i], rotation_angles=r, verbose=False)
-    gen.export(path=f'{p}{floors[i].id}', compressed=c)
+    gen.export(path=f'{p}{floors[i].id}')
     del gen
     return nb
 
@@ -94,7 +93,6 @@ class FPDatasetGenerator(object):
             self,
             db: 'DbLoader',
             path: str,
-            compressed: bool = True,
             rotation_angles: RotationAnglesType = DEFAULT_ROTATION_ANGLES,
             **kwargs) -> List[Tuple[int, int]]:
         """
@@ -102,7 +100,6 @@ class FPDatasetGenerator(object):
 
         :param db: Dataset to process
         :param path: Path to export the data. The floor ID is appended to the path, for example, "abc/cd" => "abc/cd_123"
-        :param compressed: Save compressed file
         :param rotation_angles: Which rotation angles are applied to the floor plan
         :param kwargs: Optional keyword arguments
         :return: List of (added, ignored) patches for each floor in the dataset
@@ -116,13 +113,13 @@ class FPDatasetGenerator(object):
         t = len(db.floors)
         print(f'Total floors to compute in parallel: {t}')
         print(f'Using up to {num_proc}/{cpu_count()} CPUs')
-        print(f'Using export path: {path}, compressed: {compressed}, image size: {isz}px, patch size: {psz}m')
+        print(f'Using export path: {path}, image size: {isz}px, patch size: {psz}m')
         print(f'Crop delta x: {dx}, delta y: {dy}, black/white: {bw}')
         print(f'Rotation angles: {rotation_angles}')
         pool = Pool(processes=num_proc)
         results = pool.map(functools.partial(
             _process_fp_dataset_mp, db=db, isz=isz, psz=psz, bw=bw,
-            dx=dx, dy=dy, p=path, c=compressed, r=rotation_angles), range(t))
+            dx=dx, dy=dy, p=path, r=rotation_angles), range(t))
         pool.close()
         pool.join()
         total_time = time.time() - t0
@@ -171,12 +168,11 @@ class FPDatasetGenerator(object):
         return added, ignored
 
     # noinspection PyProtectedMember
-    def export(self, path: str, compressed: bool = True) -> None:
+    def export(self, path: str) -> None:
         """
         Export images to file. After export, the object is cleared.
 
         :param path: Path to export the data, which is extended with _binary and _photo
-        :param compressed: Save compressed file
         """
 
         def save_list(fn: str, image_list: List['np.ndarray']) -> None:
@@ -189,10 +185,7 @@ class FPDatasetGenerator(object):
             make_dirs(fn)
             if len(image_list) == 0:
                 return
-            if compressed:
-                np.savez_compressed(fn, data=np.array(image_list, dtype='uint8'))  # .npz
-            else:
-                np.save(fn, np.array(image_list, dtype='uint8'))  # .npy
+            np.savez_compressed(fn, data=np.array(image_list, dtype='uint8'))  # .npz
 
         save_list(f'{path}_binary', self._gen._patch_binary)
         save_list(f'{path}_photo', self._gen._patch_photo)
