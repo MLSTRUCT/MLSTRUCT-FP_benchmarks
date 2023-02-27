@@ -190,7 +190,7 @@ class UNETFloorPhotoModel(GenericModel):
         assert isinstance(init_part, int)
 
         # The idea is to train using each part of the data, metrics will not be evaluated
-        total_parts: int = self._data.get_total_parts()
+        total_parts: int = self._data.total_parts
         assert 1 <= init_part <= total_parts, \
             f'Initial part <{init_part}> exceeds total parts <{total_parts}>'
 

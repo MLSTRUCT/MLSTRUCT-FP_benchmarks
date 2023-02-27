@@ -4,16 +4,12 @@ MLSTRUCTFP BENCHMARKS - ML - MODEL - CORE - UTILS
 Core utils.
 """
 
-__all__ = [
-    'load_data_from_session',
-    'load_model_from_session'
-]
+__all__ = ['load_model_from_session']
 
 import MLStructFP_benchmarks.ml.model.architectures as fparch
-from MLStructFP_benchmarks.ml.model.core import ModelDataXY, GenericModel
+from MLStructFP_benchmarks.ml.model.core import GenericModel
 
 # Import versions
-from MLStructFP_benchmarks.ml.model.core._data_xy import _SESSION_EXPORT_VERSION as SESSION_DATA_VERSION
 from MLStructFP_benchmarks.ml.model.core._model import _SESSION_EXPORT_VERSION as SESSION_MODEL_VERSION
 
 from pathlib import Path
@@ -21,48 +17,6 @@ from typing import Union, Any, Optional
 import json
 import os
 import tensorflow as tf
-
-
-def load_data_from_session(
-        filename: str,
-        load_images: bool = True,
-        check_hash: bool = True
-) -> 'ModelDataXY':
-    """
-    Load data from a session.
-
-    :param filename: Session file
-    :param load_images: Load images
-    :param check_hash: Checks file hash
-    """
-    if '.json' not in filename:
-        filename += '.json'
-    _err_msg = 'Session file <{0}> does not exist in path <{1}>'
-    assert os.path.isfile(filename), _err_msg.format(filename, os.getcwd())
-    parent_dir = Path(os.path.abspath(filename)).parent
-
-    with open(filename, 'r') as fp:
-        data = json.load(fp)
-    assert data['version'] == SESSION_DATA_VERSION, \
-        'Outdated session export version, needed {0}, current {1}'.format(
-            SESSION_DATA_VERSION, data['version'])
-
-    img_col = data['image_col']
-    if not load_images:
-        img_col = ''
-
-    data = ModelDataXY(
-        filename=data['filename'],
-        column_id=data['id_col'],
-        image_col=img_col,
-        image_size=data['image_size'],
-        drop_id=data['drop_id'],
-        path=parent_dir  # This search the parent folder recursively until finding the data
-    )
-    data._load_images = load_images
-    data.load_session(filename=filename, check_hash=check_hash)
-
-    return data
 
 
 def load_model_from_session(

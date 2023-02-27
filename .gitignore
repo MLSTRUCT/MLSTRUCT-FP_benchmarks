@@ -18,8 +18,10 @@ dist/
 *.egg-info
 
 # Other
-_dev_*
 .db/
 .old/
 .out/
+.out_hr/
+.session/
+_dev_*
 ~$*

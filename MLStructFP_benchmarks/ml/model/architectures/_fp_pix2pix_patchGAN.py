@@ -749,7 +749,7 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
         :param part_to: To part, if -1 train to last
         """
         self._train_date = datetime.datetime.today().strftime('%Y%m%d%H%M%S')  # Initial train date
-        total_parts = self._data.get_total_parts()
+        total_parts = self._data.total_parts()
         if part_to == -1:
             part_to = total_parts
         assert 1 <= part_from < part_to <= total_parts
@@ -801,7 +801,7 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
             self._train_date = datetime.datetime.today().strftime('%Y%m%d%H%M%S')
         self._train_current_part = part
 
-        total_parts = self._data.get_total_parts()
+        total_parts = self._data.total_parts()
         assert 1 <= part <= total_parts
         _crop_len: int = 0  # Crop to size
         _scale_to_1: bool = True  # Crop to scale

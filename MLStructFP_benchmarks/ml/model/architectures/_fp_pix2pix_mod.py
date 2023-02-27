@@ -430,7 +430,7 @@ class Pix2PixFloorPhotoModModel(GenericModel):
         :param part_to: To part, if -1 train to last
         """
         self._train_date = datetime.datetime.today().strftime('%Y%m%d%H%M%S')  # Initial train date
-        total_parts = self._data.get_total_parts()
+        total_parts = self._data.total_parts
         if part_to == -1:
             part_to = total_parts
         assert 1 <= part_from < part_to <= total_parts
@@ -486,7 +486,7 @@ class Pix2PixFloorPhotoModModel(GenericModel):
         valid = np.ones((batch_size,) + self._disc_patch)
         fake = np.zeros((batch_size,) + self._disc_patch)
 
-        total_parts = self._data.get_total_parts()
+        total_parts = self._data.total_parts
         assert 1 <= part <= total_parts
         _crop_len: int = 0  # Crop to size
         _scale_to_1: bool = True  # Crop to scale
@@ -503,7 +503,7 @@ class Pix2PixFloorPhotoModModel(GenericModel):
             del self._x, self._y
 
         print(f'Loading data part {part}/{total_parts}', end='')
-        part_data = self._data.load_part(part=part, xy='y', remove_null=True, shuffle=False)
+        part_data = self._data.load_part(part=part, xy='y', shuffle=False)
         xtrain_img: 'np.ndarray' = part_data['y_rect'].copy()  # Unscaled, from range (0,255)
         ytrain_img: 'np.ndarray' = part_data['y_fphoto'].copy()  # Unscaled, from range (0, 255)
         del part_data

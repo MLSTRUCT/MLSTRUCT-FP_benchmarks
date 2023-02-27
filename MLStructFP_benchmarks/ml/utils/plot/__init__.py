@@ -18,7 +18,6 @@ if __keras:
 else:
     plot_model_architecture = None
 
-from MLStructFP_benchmarks.ml.utils.plot._plot_data_xy import DataXYPlot
 from MLStructFP_benchmarks.ml.utils.plot._plot_model import compare_metrics_from_csv
 
 from MLStructFP_benchmarks.ml.utils.plot._utils import annotate_heatmap, heatmap
