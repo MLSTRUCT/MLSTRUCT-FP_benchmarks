@@ -24,7 +24,7 @@ import random
 import time
 
 if TYPE_CHECKING:
-    from MLStructFP_benchmarks.ml.model.architectures._data_floor_photo_xy import DataFloorPhotoXY
+    from ml.model.core._data_floor_photo_xy import DataFloorPhotoXY
 
 _DISCRIMINATOR_LOSS: str = 'binary_crossentropy'  # 'binary_crossentropy'
 
