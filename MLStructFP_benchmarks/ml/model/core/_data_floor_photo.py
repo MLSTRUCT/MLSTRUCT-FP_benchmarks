@@ -6,7 +6,7 @@ Photo data.
 
 __all__ = [
     '_SESSION_EXPORT_VERSION',
-    'DataFloorPhotoXY',
+    'DataFloorPhoto',
     'load_floor_photo_data_from_session'
 ]
 
@@ -28,90 +28,6 @@ import time
 
 _DATA_DTYPE: str = 'uint8'
 _SESSION_EXPORT_VERSION: str = '1.1'
-
-
-def _load_photo_parts(filename: str) -> Tuple[List[str], Dict[int, Tuple[int, int]], Dict[int, List[int]]]:
-    """
-    Load photo parts from file.
-
-    :param filename: Data file
-    :return: List of files, Dict of index inputs for each part, Dict of project ID for each part
-    """
-    assert os.path.isfile(filename), f'Floor photo file <{filename}> does not exist'
-
-    def _get_part(line: str) -> int:
-        """
-        Get number of part from a given line.
-
-        :param line: Line of text
-        :return: Number of the part
-        """
-        return int(line.split('part')[1])
-
-    def _get_id(line: str) -> int:
-        """
-        Get ID from a given line.
-
-        :param line: Line of text
-        :return: ID
-        """
-        return int(line.split(',')[0])
-
-    def _get_project_id(line: str) -> int:
-        """
-        Get project ID from a given line.
-
-        :param line: Line of text
-        :return: Project ID
-        """
-        _k = line.split(',')[1].strip().split('-')
-        if '[NULL]' not in line:
-            return int(_k[1])
-        return int(_k[2])
-
-    # Load file names
-    photo_files: List[str] = []
-    floor_photo_files_names = open(filename, 'r')
-    for j in floor_photo_files_names:
-        n = j.strip()
-        if n == 'ID,File' or len(n) == 0:
-            continue
-        photo_files.append(n)
-    floor_photo_files_names.close()
-
-    # Make ID range for each part
-    total_parts = _get_part(photo_files[-1])
-    assert total_parts > 1, 'Number of parts cannot be lower or equal than 1'
-    partsid = {}
-    projectid = {0: []}
-
-    last_part = 0  # Last part number
-    last_part_id = 0  # Initial ID of the part
-    last_id = 0
-    for j in photo_files:
-        part_j: int = _get_part(j)
-        if part_j != last_part:
-            partsid[last_part] = (last_part_id, last_id)
-            projectid[part_j] = []
-            last_part = _get_part(j)
-            last_part_id = _get_id(j)
-        last_id = _get_id(j)
-        project_id = _get_project_id(j)
-        if project_id not in projectid[part_j]:
-            projectid[part_j].append(project_id)
-    partsid[last_part] = (last_part_id, last_id)
-    del partsid[0]
-    del projectid[0]
-
-    # Check partsID
-    parts_key = list(partsid.keys())
-    assert len(parts_key) == total_parts, 'Number of parts does not match'
-    for k in range(len(parts_key) - 1):
-        assert parts_key[k + 1] - parts_key[k] == 1, 'Parts should diff in 1 unit'
-        assert partsid[parts_key[k + 1]][0] == partsid[parts_key[k]][1] + 1, 'Invalid part lower continuity'
-        assert partsid[parts_key[k]][1] - partsid[parts_key[k]][0] >= 1, 'Invalid part size'
-
-    return photo_files, partsid, projectid
 
 
 def _is_dict_equal(x: Dict[Any, Any], y: Dict[Any, Any]) -> bool:
@@ -146,100 +62,27 @@ def _is_dict_equal(x: Dict[Any, Any], y: Dict[Any, Any]) -> bool:
     return True
 
 
-class DataFloorPhotoXY(object):
+class DataFloorPhoto(object):
     """
     Floor Photo XY.
     """
-    _file_floor_photo_images_x: List[str]
-    _file_floor_photo_images_y: List[str]
-    _file_rect_images_x: str
-    _file_rect_images_y: str
-    _filename: str
-    _floor_photo_ch: int
-    _floor_photo_size: int
-    _loaded_session: Dict[str, Any]
-    _num_parts: int
-    _parts_id: Dict[int, Tuple[int, int]]  # Stores initial and last index images for each part
-    _parts_project_id: Dict[int, List[int]]
-    _photo_files_x: List[str]
-    _photo_files_y: List[str]
-    _photo_x: 'np.ndarray'
-    _photo_y: 'np.ndarray'
-    _rect_image_ch: int
-    _rect_image_size: int
-    _rect_x: 'np.ndarray'
-    _rect_y: 'np.ndarray'
+    _parts: List[str]  # List of part IDs
 
-    def __init__(
-            self,
-            filename: str,
-            rect_image_size: int,
-            floor_photo_size: int,
-            rect_image_channels: int,
-            floor_photo_channels: int
-    ) -> None:
+    def __init__(self, path: str) -> None:
         """
         Constructor.
 
-        :param filename: Data file
-        :param rect_image_size: Rect image size (px)
-        :param floor_photo_size: Rect floor photo size (px)
-        :param rect_image_channels: Rect image number of channels
-        :param floor_photo_channels: Rect floor photo number of channels
+        :param path: The path that stores the images. Requires all data to have the same image dimension
         """
-        assert rect_image_size > 0, 'Rect image size must be greater than zero'
-        assert math.log(rect_image_size, 2).is_integer(), 'Rect image size must be a power of 2'
-        assert floor_photo_size > 0, 'Floor image size must be greater than zero'
-        assert math.log(floor_photo_size, 2).is_integer(), 'Floor image size must be a power of 2'
-        assert rect_image_channels >= 1
-        assert floor_photo_channels >= 1
-
-        self._filename = os.path.splitext(filename)[0]
-
-        self._floor_photo_ch = floor_photo_channels
-        self._floor_photo_size = floor_photo_size
-        self._rect_image_ch = rect_image_channels
-        self._rect_image_size = rect_image_size
-
-        self._loaded_session = {}
-
-        # Check file exists
-        self._file_rect_images_x = filename + f'_images_x_{rect_image_size}.npz'
-        self._file_rect_images_y = filename + f'_images_y_{rect_image_size}.npz'
-        assert os.path.isfile(self._file_rect_images_x), \
-            f'X rect images file <{self._file_rect_images_x}> does not exist'
-        assert os.path.isfile(self._file_rect_images_y), \
-            f'Y rect images file <{self._file_rect_images_y}> does not exist'
-
-        # Load the files from floor photos
-        self._photo_files_x, _parts_id_x, _parts_proj_x = \
-            _load_photo_parts(filename + f'_rect_floor_photo_x_{floor_photo_size}_files.csv')
-        self._photo_files_y, _parts_id_y, _parts_proj_y = \
-            _load_photo_parts(filename + f'_rect_floor_photo_y_{floor_photo_size}_files.csv')
-
-        # Compute the number of parts
-        parts_x = int(self._photo_files_x[-1].split('part')[1])
-        parts_y = int(self._photo_files_y[-1].split('part')[1])
-        assert parts_x == parts_y, \
-            'Number of parts are different between x and y photo files'
-        assert _is_dict_equal(_parts_id_x, _parts_id_y), \
-            'ID partition of parts are different between x and y photo files'
-        assert _is_dict_equal(_parts_proj_x, _parts_proj_y), \
-            'Project partition from parts are different between x and y'
-        self._num_parts = parts_x
-        self._parts_id = _parts_id_x
-        self._parts_project_id = _parts_proj_x
-
-        # Check parts files exists
-        self._file_floor_photo_images_x = []
-        self._file_floor_photo_images_y = []
-        for i in range(self._num_parts):
-            px = filename + f'_rect_floor_photo_x_{floor_photo_size}_part{i + 1}.npz'
-            py = filename + f'_rect_floor_photo_y_{floor_photo_size}_part{i + 1}.npz'
-            assert os.path.exists(px), f'Floor photo x file <{px}> does not exist'
-            assert os.path.exists(py), f'Floor photo y file <{py}> does not exist'
-            self._file_floor_photo_images_x.append(px)
-            self._file_floor_photo_images_y.append(py)
+        assert os.path.isdir(path), f'Path <{path}> does not exist'
+        self._parts = []
+        for f in os.listdir(path):
+            j = f.split('_')
+            if os.path.splitext(f)[1] != '.npz':
+                continue
+            print(j)
+            assert len(j) == 2, f'File require name format ID_type.npz, but <{f}> was found in path'
+            print(f)
 
     def get_image_shape(self) -> Tuple[int, int, int]:
         """
@@ -489,9 +332,8 @@ class DataFloorPhotoXY(object):
             rect_id, mutator_id, o['part'], xy)
         return self.plot_image_example_id(o=o, xy=xy, imid=ri, title=title)
 
-    # noinspection PyMethodMayBeStatic
+    @staticmethod
     def plot_image_example_id(
-            self,
             o: Dict[str, Union[Union['np.ndarray'], str, float]],
             xy: str,
             imid: int,
@@ -655,7 +497,7 @@ class DataFloorPhotoXY(object):
         )
 
 
-def load_floor_photo_data_from_session(filename: str) -> 'DataFloorPhotoXY':
+def load_floor_photo_data_from_session(filename: str) -> 'DataFloorPhoto':
     """
     Load data floor photo from session file.
 
@@ -672,7 +514,7 @@ def load_floor_photo_data_from_session(filename: str) -> 'DataFloorPhotoXY':
         'Outdated session export version, needed {0}, current {1}'.format(
             _SESSION_EXPORT_VERSION, data['version'])
 
-    data = DataFloorPhotoXY(
+    data = DataFloorPhoto(
         filename=data['filename'],
         rect_image_size=data['rect_image_size'],
         floor_photo_size=data['floor_photo_size'],

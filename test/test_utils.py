@@ -39,10 +39,10 @@ class UtilsTest(unittest.TestCase):
         """
         db = DbLoader(DB_PATH)
         dbgen = FPDatasetGenerator(64, 20)
-        r = dbgen.process_dataset(db, '.out/test_', rotation_angles=(0,))
+        r = dbgen.process_dataset(db, '.out/', rotation_angles=(0,))
         expected = [(74, 34), (18, 0), (18, 0), (27, 0), (33, 3), (73, 17), (4, 14)]
         for f in db.floors:
-            self.assertTrue(os.path.isfile(f'.out/test_{f.id}_binary.npz'))
-            self.assertTrue(os.path.isfile(f'.out/test_{f.id}_photo.npz'))
+            self.assertTrue(os.path.isfile(f'.out/{f.id}_binary.npz'))
+            self.assertTrue(os.path.isfile(f'.out/{f.id}_photo.npz'))
         for i in range(len(expected)):
             self.assertEqual(r[i], expected[i])

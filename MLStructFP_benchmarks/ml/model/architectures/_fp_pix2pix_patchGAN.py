@@ -31,7 +31,7 @@ import time
 import traceback
 
 if TYPE_CHECKING:
-    from ml.model.core._data_floor_photo_xy import DataFloorPhotoXY
+    from ml.model.core import DataFloorPhoto
 
 _DIR_ATOB: str = 'AtoB'
 _DIR_BTOA: str = 'BtoA'
@@ -384,7 +384,7 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
     """
     Pix2Pix floor photo model image generation. Modified version.
     """
-    _data: 'DataFloorPhotoXY'
+    _data: 'DataFloorPhoto'
     _dir: str  # Direction
     _path_logs: str  # Stores path logs
     _train_current_part: int
@@ -413,7 +413,7 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
 
     def __init__(
             self,
-            data: Optional['DataFloorPhotoXY'],
+            data: Optional['DataFloorPhoto'],
             name: str,
             xy: str,
             direction: str,

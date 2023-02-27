@@ -24,7 +24,7 @@ import random
 import time
 
 if TYPE_CHECKING:
-    from ml.model.core._data_floor_photo_xy import DataFloorPhotoXY
+    from ml.model.core import DataFloorPhoto
 
 _DISCRIMINATOR_LOSS: str = 'binary_crossentropy'  # 'binary_crossentropy'
 
@@ -42,7 +42,7 @@ class UNETFloorPhotoModel(GenericModel):
     """
     UNET model image generation.
     """
-    _data: 'DataFloorPhotoXY'
+    _data: 'DataFloorPhoto'
     _samples: Dict[int, Dict[str, 'np.ndarray']]  # Samples for each part
     _xy: str
 
@@ -59,7 +59,7 @@ class UNETFloorPhotoModel(GenericModel):
 
     def __init__(
             self,
-            data: Optional['DataFloorPhotoXY'],
+            data: Optional['DataFloorPhoto'],
             name: str,
             xy: str,
             image_shape: Optional[Tuple[int, int, int]] = None,

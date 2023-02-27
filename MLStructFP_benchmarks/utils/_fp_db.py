@@ -118,6 +118,7 @@ class FPDatasetGenerator(object):
         print(f'Using up to {num_proc}/{cpu_count()} CPUs')
         print(f'Using export path: {path}, compressed: {compressed}, image size: {isz}px, patch size: {psz}m')
         print(f'Crop delta x: {dx}, delta y: {dy}, black/white: {bw}')
+        print(f'Rotation angles: {rotation_angles}')
         pool = Pool(processes=num_proc)
         results = pool.map(functools.partial(
             _process_fp_dataset_mp, db=db, isz=isz, psz=psz, bw=bw,

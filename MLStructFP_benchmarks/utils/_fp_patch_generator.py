@@ -1,9 +1,7 @@
 """
 MLSTRUCTFP BENCHMARKS - UTILS - PATCH GENERATOR
 
-Generates an image patch for a given set of floor plans. The image results
-are saved as (x, y) tuples, where x stands for the floor plan image, and y
-for the binary one obtained directly from the rectangles.
+Generate image patches (binary, images) for a given set of floor plans.
 
 The patches are computed by setting a patch size, fixed for x/y axes, thus,
 only square-images are valid. Then it proposes a set of patches, where for
