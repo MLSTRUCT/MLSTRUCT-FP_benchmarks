@@ -745,12 +745,6 @@ class Pix2PixFloorPhotoModel(GenericModel):
             y=self._format_tuple(y, ('np', 'np'), 'y')
         )
 
-    def get_xy(self, xy: str) -> Any:
-        """
-        See upper doc.
-        """
-        raise RuntimeError('Function invalid in this Model')
-
     def _custom_save_session(self, filename: str, data: dict) -> None:
         """
         See upper doc.

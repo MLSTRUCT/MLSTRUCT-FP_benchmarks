@@ -1,5 +1,6 @@
 # Cache
 __pycache__/
+.pytest_cache
 
 # IDE
 .idea/
@@ -18,10 +19,12 @@ dist/
 *.egg-info
 
 # Other
-.db/
-.old/
-.out/
-.out_hr/
-.session/
 _dev_*
+.checkpoint/
+.db/
+.logs/
+.old/
+.out_hr/
+.out/
+.session/
 ~$*

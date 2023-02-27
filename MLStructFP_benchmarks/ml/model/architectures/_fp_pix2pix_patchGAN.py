@@ -974,12 +974,6 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
         img = self._generator.predict(scale_array_to_range(x, (-1, 1), 'float32'))
         return scale_array_to_range(img, (0, 255), 'float32')
 
-    def get_xy(self, xy: str) -> Any:
-        """
-        See upper doc.
-        """
-        raise RuntimeError('Method disabled on current model')
-
     def evaluate(self, x: Any, y: Any) -> List[float]:
         """
         See upper doc.

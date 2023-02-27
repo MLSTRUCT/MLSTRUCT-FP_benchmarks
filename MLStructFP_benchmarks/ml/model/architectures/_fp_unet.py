@@ -44,7 +44,6 @@ class UNETFloorPhotoModel(GenericModel):
     """
     _data: 'DataFloorPhoto'
     _samples: Dict[int, Dict[str, 'np.ndarray']]  # Samples for each part
-    _xy: str
 
     # Train
     _current_train_date: str
@@ -61,7 +60,6 @@ class UNETFloorPhotoModel(GenericModel):
             self,
             data: Optional['DataFloorPhoto'],
             name: str,
-            xy: str,
             image_shape: Optional[Tuple[int, int, int]] = None,
             **kwargs
     ) -> None:
@@ -70,11 +68,9 @@ class UNETFloorPhotoModel(GenericModel):
 
         :param data: Model data
         :param name: Model name
-        :param xy: Which data use, if "x" learn from Architectural pictures, "y" from Structure
         :param image_shape: Input shape
         :param kwargs: Optional keyword arguments
         """
-        assert xy in ['x', 'y'], 'Invalid xy, use "x" or "y"'
 
         # Load data
         GenericModel.__init__(self, name=name, path=kwargs.get('path', ''))
@@ -83,7 +79,7 @@ class UNETFloorPhotoModel(GenericModel):
 
         # Input shape
         if data is not None:
-            assert data.__class__.__name__ == 'DataFloorPhotoXY', \
+            assert data.__class__.__name__ == 'DataFloorPhoto', \
                 f'Invalid data class <{data.__class__.__name__}>'
             self._data = data
             self._image_shape = data.get_image_shape()
@@ -95,11 +91,8 @@ class UNETFloorPhotoModel(GenericModel):
             self._image_shape = image_shape
 
         self._samples = {}
-        self._xy = xy
         self._img_size = self._image_shape[0]
         self._info(f'Image shape {self._image_shape}')
-
-        self._register_session_data('xy', xy)
 
         inputs = Input(self._image_shape)
         conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(inputs)
@@ -143,7 +136,7 @@ class UNETFloorPhotoModel(GenericModel):
         merge9 = concatenate([conv1, up9], axis=3)
         conv9 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(merge9)
         conv9 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv9)
-        conv10 = Conv2D(3, 1, activation='sigmoid', name=self._output_layers[0])(conv9)
+        conv10 = Conv2D(1, 1, activation='sigmoid', name=self._output_layers[0])(conv9)  # To binary, aka, just b/w
 
         self._model = Model(inputs=inputs, outputs=conv10)
         self._model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
@@ -188,6 +181,7 @@ class UNETFloorPhotoModel(GenericModel):
         # Get initial parts
         init_part = kwargs.get('init_part', 1)
         assert isinstance(init_part, int)
+        verbose = self._verbose
 
         # The idea is to train using each part of the data, metrics will not be evaluated
         total_parts: int = self._data.total_parts
@@ -212,33 +206,20 @@ class UNETFloorPhotoModel(GenericModel):
         if n_parts != -1:
             print(f'Number of parts to be processed: {n_parts}')
 
-        _crop_len = 0
-        if _crop_len != 0:
-            print(f'Cropping: {_crop_len} elements')
-
-        _scale_to_1 = True
-        if not _scale_to_1:
-            print('Scale to (-1,1) is disabled')
-
         npt = 0  # Number of processed parts
         for i in range(total_parts):
+            if i > 0:
+                self._verbose = False
             part = i + 1
             if part < init_part:
                 continue
 
-            print(f'Loading data part {part}/{total_parts}', end='')
-            part_data = self._data.load_part(part=part, xy=self._xy, remove_null=True, shuffle=False)
-            xtrain_img: 'np.ndarray' = part_data[self._xy + '_rect'].copy()  # Unscaled, from range (0, 1)
-            ytrain_img: 'np.ndarray' = part_data[self._xy + '_fphoto'].copy()  # Unscaled, from range (0, 1)
-            del part_data
-
-            xtrain_img /= 255
-            ytrain_img /= 255
+            print(f'Loading data part {part}/{total_parts}')
+            part_data = self._data.load_part(part=part, shuffle=False)
+            xtrain_img: 'np.ndarray' = part_data['photo']
+            ytrain_img: 'np.ndarray' = part_data['binary']
 
             # Crop data
-            if _crop_len != 0:
-                _cr = min(_crop_len, len(xtrain_img))
-                xtrain_img, ytrain_img = xtrain_img[0:_cr], ytrain_img[0:_cr]
             _free()
 
             # Make sample inputs
@@ -270,6 +251,7 @@ class UNETFloorPhotoModel(GenericModel):
             _free()
             if not self._is_trained:
                 print('Train failed, stopping')
+                self._verbose = verbose
                 return
 
             # Predict samples
@@ -287,6 +269,9 @@ class UNETFloorPhotoModel(GenericModel):
             if npt == n_parts:
                 print(f'Reached number of parts to be processed ({n_parts}), train has finished')
                 break
+
+        # Restore verbose
+        self._verbose = verbose
 
     def predict_image(self, img: 'np.ndarray') -> 'np.ndarray':
         """
@@ -318,12 +303,6 @@ class UNETFloorPhotoModel(GenericModel):
             x=self._format_tuple(x, 'np', 'x'),
             y=self._format_tuple(y, ('np', 'np'), 'y')
         )
-
-    def get_xy(self, xy: str) -> Any:
-        """
-        See upper doc.
-        """
-        raise RuntimeError('Function invalid in this Model')
 
     def _custom_save_session(self, filename: str, data: dict) -> None:
         """

@@ -688,12 +688,6 @@ class Pix2PixFloorPhotoModModel(GenericModel):
             transformed.append(xi)
         return np.array(transformed)
 
-    def get_xy(self, xy: str) -> Any:
-        """
-        See upper doc.
-        """
-        raise RuntimeError('Method disabled on current model')
-
     def evaluate(self, x: Any, y: Any) -> List[float]:
         """
         See upper doc.

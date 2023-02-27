@@ -91,15 +91,15 @@ def _check_path(path: str) -> None:
     path_cp = os.path.join(path, _PATH_CHECKPOINT)
     path_session = os.path.join(path, _PATH_SESSION)
     if not os.path.isdir(path_logs):
-        e = f'Logs path <{path_logs}> does not exist'
+        e = f'Logs path <{path_logs}> does not exist. Creating new one'
         warnings.warn(e)
         os.mkdir(path_logs)
     if not os.path.isdir(path_cp):
-        e = f'Checkpoint path <{path_cp}> does not exist'
+        e = f'Checkpoint path <{path_cp}> does not exist. Creating new one'
         warnings.warn(e)
         os.mkdir(path_cp)
     if not os.path.isdir(path_session):
-        e = f'Session path <{path_session}> does not exist'
+        e = f'Session path <{path_session}> does not exist. Creating new one'
         warnings.warn(e)
         os.mkdir(path_session)
 
@@ -1672,16 +1672,6 @@ class GenericModel(ABC):
         if self._production:
             raise RuntimeError(_ERROR_MODEL_IN_PRODUCTION)
         return self._model.evaluate(x=x, y=y, verbose=self._verbose)
-
-    @abstractmethod
-    def get_xy(self, xy: str) -> Any:
-        """
-        Returns the xy datasets.
-
-        :param xy: Which data
-        :return: Dataframes
-        """
-        pass
 
     def info(self) -> None:
         """
