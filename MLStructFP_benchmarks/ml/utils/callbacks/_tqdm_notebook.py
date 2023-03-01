@@ -111,7 +111,7 @@ class TQDMProgressBar(Callback):
         if hook == 'train_overall':
             if self.show_overall_progress:
                 self.overall_progress_tqdm = self.tqdm(
-                    desc="Training",
+                    desc='Training',
                     total=self.num_epochs,
                     bar_format=self.overall_bar_format,
                     leave=self.leave_overall_progress,
