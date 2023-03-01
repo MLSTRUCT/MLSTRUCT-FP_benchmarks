@@ -14,10 +14,9 @@ except ModuleNotFoundError:
     __keras = False
 
 if __keras:
-    from MLStructFP_benchmarks.ml.utils.plot._keras import plot_model_architecture
+    from MLStructFP_benchmarks.ml.utils.plot._keras import *
 else:
     plot_model_architecture = None
 
-from MLStructFP_benchmarks.ml.utils.plot._plot_model import compare_metrics_from_csv
-
-from MLStructFP_benchmarks.ml.utils.plot._utils import annotate_heatmap, heatmap
+from MLStructFP_benchmarks.ml.utils.plot._plot_model import *
+from MLStructFP_benchmarks.ml.utils.plot._utils import *
