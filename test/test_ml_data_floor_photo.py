@@ -48,3 +48,19 @@ class UtilsTest(unittest.TestCase):
         data.save_session('.session/data')
         data2 = load_floor_photo_data_from_session('.session/data')
         self.assertEqual(data._parts, data2._parts)
+
+        data.assemble_train_test(0.7)
+        data.save_session('.session/data')
+        data2 = load_floor_photo_data_from_session('.session/data')
+        data._split = data2._split
+
+    def test_split(self) -> None:
+        """
+        Test train/test split.
+        """
+        data = DataFloorPhoto(self._out, shuffle_parts=True).assemble_train_test(0.7)
+        self.assertEqual(data.train_split, 0.57)
+        tr_s = 0
+        for i in data._split[0]:
+            tr_s += data.load_part(data._parts.index(i) + 1, ignore_split=True)['binary'].shape[0]
+        self.assertEqual(tr_s, data.load_part(1)['binary'].shape[0])

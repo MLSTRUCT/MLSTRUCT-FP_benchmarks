@@ -13,7 +13,7 @@ __all__ = [
 from MLStructFP.utils import DEFAULT_PLOT_DPI, configure_figure, make_dirs
 
 from datetime import datetime
-from typing import List, Dict, Tuple, Any
+from typing import List, Dict, Tuple, Any, Optional
 import gc
 import json
 import matplotlib.pyplot as plt
@@ -73,6 +73,7 @@ class DataFloorPhoto(object):
     _loaded_session: Dict[str, Any]  # Stores session data
     _parts: List[int]  # List of part IDs
     _path: str  # Path containg the images
+    _split: Optional[List[List[int]]]  # Train/test split
 
     def __init__(self, path: str, shuffle_parts: bool = True) -> None:
         """
@@ -85,6 +86,7 @@ class DataFloorPhoto(object):
         self._path = path
         self._parts = []
         self._loaded_session = {}
+        self._split = []
         for f in os.listdir(path):
             j = f.split('_')
             if os.path.splitext(f)[1] != '.npz':
@@ -134,20 +136,33 @@ class DataFloorPhoto(object):
         """
         :return: Total number of parts
         """
-        return len(self._parts)
+        return len(self._parts) if len(self._split) == 0 else 1
 
-    def load_part(self, part: int, shuffle: bool) -> Dict[str, 'np.ndarray']:
+    def load_part(self, part: int, shuffle: bool = False, ignore_split: bool = False) -> Dict[str, 'np.ndarray']:
         """
         Load part and save into memory.
 
-        :param part: Num part
+        :param part: Num part. If split, 1 returns train, else, return test
         :param shuffle: Shuffle data order
+        :param ignore_split: If true, ignores train/test split
         :return: Binary/Photo data. Images are within (0, 1) range
         """
-        assert 1 <= part <= self.total_parts, f'Number of parts overflow, min:1, max:{self.total_parts}'
-        f = self._get_file(self._parts[part - 1])
-        img_b: 'np.ndarray' = np.load(f[0])['data']  # Binary
-        img_p: 'np.ndarray' = np.load(f[1])['data']  # Photo
+        img_b: 'np.ndarray'
+        imb_p: 'np.ndarray'
+        if len(self._split) == 0 or ignore_split:
+            assert 1 <= part <= len(self._parts), f'Number of parts overflow, min:1, max:{len(self._parts)}'
+            f = self._get_file(self._parts[part - 1])
+            img_b = np.load(f[0])['data']  # Binary
+            img_p = np.load(f[1])['data']  # Photo
+        else:
+            assert part in (1, 2), '1 returns train, 2 test. No other part value allowed'
+            train_b, train_p = [], []
+            for i in self._split[part - 1]:  # Iterate train parts
+                f = self._get_file(i)
+                train_b.append(np.load(f[0])['data'])  # Binary
+                train_p.append(np.load(f[1])['data'])  # Photo
+            img_b = np.concatenate(train_b)
+            img_p = np.concatenate(train_p)
 
         # Convert type
         if img_b.dtype != _DATA_DTYPE:
@@ -181,6 +196,33 @@ class DataFloorPhoto(object):
         }
         gc.collect()
         return out
+
+    def assemble_train_test(self, split: float) -> 'DataFloorPhoto':
+        """
+        Assemble train/test data.
+
+        :param split: Split images in train/test
+        :return: Self
+        """
+        assert 0 < split < 1, 'Split must be between 0 and 1'
+        train = []
+        test = []
+        for i in range(int(split * len(self._parts))):
+            train.append(self._parts[i])
+        for i in self._parts:
+            if i not in train:
+                test.append(i)
+        self._split = [train, test]
+        return self
+
+    @property
+    def train_split(self) -> float:
+        """
+        :return: Split partition percentage
+        """
+        if len(self._split) == 0:
+            return 0
+        return round(len(self._split[0]) / len(self._parts), 2)
 
     @staticmethod
     def plot_image_example_id(
@@ -246,10 +288,11 @@ class DataFloorPhoto(object):
                 'description': description,
 
                 # Basic data
-                'parts': self._parts,
-                'path': self._path,
                 'floor_photo_ch': self._floor_photo_ch,
                 'floor_photo_size': self._floor_photo_size,
+                'parts': self._parts,
+                'path': self._path,
+                'split': self._split,
 
             }
             json.dump(data, fp, indent=2)
@@ -284,10 +327,11 @@ class DataFloorPhoto(object):
             assert data['floor_photo_size'] == self._floor_photo_size, 'Floor image size changed'
 
             # Check parts ID are the same
-            assert len(data['parts']) == self.total_parts
+            assert len(data['parts']) == len(self._parts)
             for i in data['parts']:
                 assert i in self._parts, f'Part ID <{i}> does not exists'
             self._parts = data['parts']
+            self._split = data['split']
 
             self._loaded_session = {
                 'file': filename,
@@ -308,6 +352,15 @@ class DataFloorPhoto(object):
             filename=self._loaded_session['file'],
             description=self._loaded_session['description']
         )
+
+    @property
+    def filename(self) -> str:
+        """
+        Return the filename of the saved session.
+        """
+        if len(self._loaded_session.keys()) != 2:
+            return ''
+        return os.path.splitext(os.path.basename(self._loaded_session['file']))[0]
 
 
 def load_floor_photo_data_from_session(filename: str) -> 'DataFloorPhoto':
