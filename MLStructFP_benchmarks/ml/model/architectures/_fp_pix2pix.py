@@ -583,7 +583,7 @@ class Pix2PixFloorPhotoModel(GenericModel):
 
         Optional parameters:
             - init_part     Initial parts
-            - num_samples   Number of samples
+            - n_samples     Number of samples
             - n_parts       Number of parts to be processed, if -1 there will be no limits
         """
         # Get initial parts
@@ -600,7 +600,7 @@ class Pix2PixFloorPhotoModel(GenericModel):
             print(f'Resuming train, last processed part: {max(list(self._samples.keys()))}')
 
         # Get number of samples
-        n_samples = kwargs.get('num_samples', 3)
+        n_samples = kwargs.get('n_samples', 0)
         assert isinstance(n_samples, int)
         assert n_samples >= 0
         if n_samples > 0:
@@ -663,14 +663,15 @@ class Pix2PixFloorPhotoModel(GenericModel):
                 return
 
             # Predict samples
-            sample_predicted = self.predict_image(sample_input)
+            if n_samples > 0:
+                sample_predicted = self.predict_image(sample_input)
 
-            # Save samples
-            self._samples[part] = {
-                'input': sample_input,
-                'real': sample_real,
-                'predicted': sample_predicted
-            }
+                # Save samples
+                self._samples[part] = {
+                    'input': sample_input,
+                    'real': sample_real,
+                    'predicted': sample_predicted
+                }
             self._model.reset_states()
 
             npt += 1

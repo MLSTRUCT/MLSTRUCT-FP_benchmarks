@@ -1,14 +1,14 @@
 """
 MLSTRUCTFP BENCHMARKS - ML - MODEL - ARCHITECTURES - UNET
 
-UNet model.
+U-Net model.
 """
 
 __all__ = ['UNETFloorPhotoModel']
 
 # noinspection PyProtectedMember
 from MLStructFP_benchmarks.ml.model.core._model import GenericModel, _PATH_SESSION
-from MLStructFP_benchmarks.ml.utils import scale_array_to_range
+from MLStructFP_benchmarks.ml.utils import scale_array_to_range, iou_metric  # , jaccard_distance_loss
 from MLStructFP_benchmarks.ml.utils.plot.architectures import UNETFloorPhotoModelPlot
 
 from keras.layers import Input, Dropout, concatenate, Conv2D, UpSampling2D, MaxPooling2D
@@ -22,11 +22,13 @@ import numpy as np
 import os
 import random
 import time
+import tensorflow as tf
 
 if TYPE_CHECKING:
     from ml.model.core import DataFloorPhoto
 
 _DISCRIMINATOR_LOSS: str = 'binary_crossentropy'  # 'binary_crossentropy'
+_IOU_THRESHOLD = 0.3
 
 
 def _free() -> None:
@@ -36,6 +38,17 @@ def _free() -> None:
     time.sleep(1)
     gc.collect()
     time.sleep(1)
+
+
+def iou(y_true, y_pred):
+    """
+    IoU metric.
+
+    :param y_true: True value matrix
+    :param y_pred: Predicted matrix
+    :return: Tf function to be used as a metric
+    """
+    return tf.py_function(iou_metric, [y_true, y_pred, _IOU_THRESHOLD], tf.float32)
 
 
 class UNETFloorPhotoModel(GenericModel):
@@ -83,6 +96,7 @@ class UNETFloorPhotoModel(GenericModel):
                 f'Invalid data class <{data.__class__.__name__}>'
             self._data = data
             self._image_shape = data.get_image_shape()
+            self._test_split = 1 - data.train_split
         else:
             assert image_shape is not None, 'If data is none, input_shape must be provided'
             assert isinstance(image_shape, tuple)
@@ -93,6 +107,9 @@ class UNETFloorPhotoModel(GenericModel):
         self._samples = {}
         self._img_size = self._image_shape[0]
         self._info(f'Image shape {self._image_shape}')
+
+        # Register constructor
+        self._register_session_data('image_shape', self._image_shape)
 
         inputs = Input(self._image_shape)
         conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(inputs)
@@ -139,8 +156,11 @@ class UNETFloorPhotoModel(GenericModel):
         conv10 = Conv2D(1, 1, activation='sigmoid', name=self._output_layers[0])(conv9)  # To binary, aka, just b/w
 
         self._model = Model(inputs=inputs, outputs=conv10)
-        self._model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
-        self.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
+        self.compile(
+            optimizer=Adam(lr=1e-4),
+            loss='binary_crossentropy',  # jaccard_distance_loss(),
+            metrics=[iou, 'accuracy']
+        )
         self._check_compilation = False
 
         self.plot = UNETFloorPhotoModelPlot(self)
@@ -175,13 +195,13 @@ class UNETFloorPhotoModel(GenericModel):
 
         Optional parameters:
             - init_part     Initial parts
-            - num_samples   Number of samples
+            - n_samples     Number of samples
             - n_parts       Number of parts to be processed, if -1 there will be no limits
         """
         # Get initial parts
         init_part = kwargs.get('init_part', 1)
         assert isinstance(init_part, int)
-        verbose = self._verbose
+        print_enabled = self._print_enabled
 
         # The idea is to train using each part of the data, metrics will not be evaluated
         total_parts: int = self._data.total_parts
@@ -192,7 +212,7 @@ class UNETFloorPhotoModel(GenericModel):
             print(f'Resuming train, last processed part: {max(list(self._samples.keys()))}')
 
         # Get number of samples
-        n_samples = kwargs.get('num_samples', 3)
+        n_samples = kwargs.get('n_samples', 3)
         assert isinstance(n_samples, int)
         assert n_samples >= 0
         if n_samples > 0:
@@ -200,7 +220,7 @@ class UNETFloorPhotoModel(GenericModel):
         _free()
 
         # Get total parts to be processed
-        n_parts: int = kwargs.get('n_parts', -1)
+        n_parts = int(kwargs.get('n_parts', -1))
         assert isinstance(n_parts, int)
         assert total_parts - init_part >= n_parts >= 1 or n_parts == -1  # -1: no limits
         if n_parts != -1:
@@ -209,7 +229,7 @@ class UNETFloorPhotoModel(GenericModel):
         npt = 0  # Number of processed parts
         for i in range(total_parts):
             if i > 0:
-                self._verbose = False
+                self._print_enabled = False
             part = i + 1
             if part < init_part:
                 continue
@@ -251,18 +271,19 @@ class UNETFloorPhotoModel(GenericModel):
             _free()
             if not self._is_trained:
                 print('Train failed, stopping')
-                self._verbose = verbose
+                self._print_enabled = print_enabled
                 return
 
             # Predict samples
-            sample_predicted = self.predict_image(sample_input)
+            if n_samples > 0:
+                sample_predicted = self.predict_image(sample_input)
 
-            # Save samples
-            self._samples[part] = {
-                'input': sample_input,
-                'real': sample_real,
-                'predicted': sample_predicted
-            }
+                # Save samples
+                self._samples[part] = {
+                    'input': sample_input,
+                    'real': sample_real,
+                    'predicted': sample_predicted
+                }
             self._model.reset_states()
 
             npt += 1
@@ -270,8 +291,8 @@ class UNETFloorPhotoModel(GenericModel):
                 print(f'Reached number of parts to be processed ({n_parts}), train has finished')
                 break
 
-        # Restore verbose
-        self._verbose = verbose
+        # Restore print
+        self._print_enabled = print_enabled
 
     def predict_image(self, img: 'np.ndarray') -> 'np.ndarray':
         """
@@ -280,10 +301,15 @@ class UNETFloorPhotoModel(GenericModel):
         :param img: Image
         :return: Image
         """
+        if len(img) == 0:
+            return img
         if len(img.shape) == 3:
             img = img.reshape((-1, img.shape[0], img.shape[1], img.shape[2]))
         # pred_img = self._g_model.predict(scale_array_to_range(img, (-1, 1), 'int8'))
         pred_img = self._model.predict(scale_array_to_range(img, (0, 1), 'int8'))
+        pred_img = np.where(pred_img > _IOU_THRESHOLD, 1, 0)
+        if len(pred_img.shape) == 4:
+            pred_img = pred_img.reshape((pred_img.shape[1], pred_img.shape[2], pred_img.shape[3]))
         # print(np.min(pred_img), np.max(pred_img))
         # print(pred_img)
         return pred_img

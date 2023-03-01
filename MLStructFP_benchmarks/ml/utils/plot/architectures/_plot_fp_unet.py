@@ -31,11 +31,12 @@ class UNETFloorPhotoModelPlot(GenericModelPlot):
         """
         super().__init__(model)
 
-    def plot_predict(self, im: 'np.ndarray', save: str = '', **kwargs) -> None:
+    def plot_predict(self, im: 'np.ndarray', real: 'np.ndarray', save: str = '', **kwargs) -> None:
         """
         Predict and plot image.
 
-        :param im: Image
+        :param im: Image to predict
+        :param real: Real image
         :param save: Save figure to file
         :param kwargs: Optional keyword arguments
         """
@@ -51,7 +52,7 @@ class UNETFloorPhotoModelPlot(GenericModelPlot):
 
         ax1: 'plt.Axes' = fig.add_subplot(131)
         ax1.title.set_text('Input')
-        ax1.imshow(im / 255)
+        ax1.imshow(im)
         plt.xlabel('x $(px)$')
         plt.ylabel('y $(px)$')
         plt.axis('off')
@@ -59,8 +60,12 @@ class UNETFloorPhotoModelPlot(GenericModelPlot):
 
         ax2 = fig.add_subplot(132)
         ax2.title.set_text('Output')
-        ax2.imshow(im_pred / 255)
-        # plt.xlabel('x $(px)$')
+        ax2.imshow(im_pred)
+        plt.axis('off')
+
+        ax2 = fig.add_subplot(133)
+        ax2.title.set_text('Real')
+        ax2.imshow(real)
         plt.axis('off')
 
         configure_figure(**kwargs)
