@@ -853,8 +853,7 @@ class GenericModel(ABC):
 
         # CSV Logger
         csv_logger_file: str = '{0}{3}{1}_{2}.csv'.format(os.path.join(self._path, _PATH_LOGS), self._name_formatted,
-                                                          date_files,
-                                                          os.path.sep)
+                                                          date_files, os.path.sep)
         if self._use_csv_logger and continue_train:
             csv_logger_file = self._train_metadata['csv_logger_file']
         csv_logger: 'CSVLogger' = CSVLogger(csv_logger_file)
@@ -936,7 +935,7 @@ class GenericModel(ABC):
         initial_epoch = 0
         if continue_train:
             initial_epoch = self._train_metadata['epochs']
-            print(f'Starting from epoch: {initial_epoch}')
+            self._print(f'Starting from epoch: {initial_epoch}')
 
         # Fit model
         tini_fit = time.time()
@@ -2136,7 +2135,7 @@ class GenericModel(ABC):
             override_model: bool = False,
             override_callbacks: bool = False,
             check_hash: bool = True
-    ) -> None:
+    ) -> 'GenericModel':
         """
         Load model from session.
 
@@ -2287,7 +2286,7 @@ class GenericModel(ABC):
                     architecture = json.load(json_file)
                 self._model = model_from_json(json.dumps(architecture))
                 self._is_compiled = False
-                return
+                return self
             else:
                 self._print('The model architectures has not been overwritten as the hash is the same')
 
@@ -2350,6 +2349,7 @@ class GenericModel(ABC):
         self._print(f'Load time:\t{round(time.time() - t0, 3)}s')
         time.sleep(1)
         gc.collect()
+        return self
 
     def update_session(self) -> None:
         """
