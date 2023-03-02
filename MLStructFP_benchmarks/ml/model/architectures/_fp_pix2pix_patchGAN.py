@@ -9,12 +9,11 @@ __all__ = ['Pix2PixPatchGANFloorPhotoModel']
 
 # noinspection PyProtectedMember
 from MLStructFP_benchmarks.ml.model.core._model import GenericModel, _PATH_LOGS, _RUNTIME_METADATA_KEY, _PATH_CHECKPOINT
-from MLStructFP_benchmarks.ml.utils import scale_array_to_range
+from MLStructFP_benchmarks.ml.utils import scale_array_to_range, iou_metric
 from MLStructFP_benchmarks.ml.utils.plot.architectures import Pix2PixPatchGANFloorPhotoModelPlot
 
 from keras.layers import Flatten, Input, Dropout, BatchNormalization, Reshape, \
     Conv2D, Concatenate, Layer, UpSampling2D, Lambda, Dense
-# from keras.optimizers import Adam
 from tensorflow.keras.optimizers import Adam
 from keras.layers.merge import concatenate
 from keras.layers.advanced_activations import LeakyReLU
@@ -43,6 +42,9 @@ def _free() -> None:
     time.sleep(1)
 
 
+_IOU_THRESHOLD: float = 0.3
+
+
 def dcgan(
         generator_model: 'Model',
         discriminator_model: 'Model',
@@ -60,8 +62,8 @@ def dcgan(
     This differs from standard GAN training in that we use patches of the image
     instead of the full image (although a patch size = img_size is basically the whole image)
 
-    :param generator_model:
-    :param discriminator_model:
+    :param generator_model: Generator model
+    :param discriminator_model: Discriminator model
     :param input_img_dim: Input image dimension
     :param patch_dim: Patch dimension
     :return: DCGAN model
@@ -327,8 +329,8 @@ def _get_disc_batch(
     """
     Generate a batch of data.
 
-    :param x_original_batch: Original Y batch data (A)
-    :param x_decoded_batch: Original X decoded data (B)
+    :param x_original_batch: Original batch data
+    :param x_decoded_batch: Original decoded data
     :param generator_model: Generator model
     :param make_fake: Make fake examples
     :param patch_dim: Patch dimension
@@ -371,7 +373,7 @@ def _get_disc_batch(
             if p > 0:
                 y_disc[:, [0, 1]] = y_disc[:, [1, 0]]
 
-    # Now extract patches form x_disc
+    # Now extract patches from x_disc
     x_disc = _extract_patches(images=x_disc, sub_patch_dim=patch_dim)
 
     return x_disc, y_disc
@@ -382,7 +384,6 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
     Pix2Pix floor photo model image generation. Modified version.
     """
     _data: 'DataFloorPhoto'
-    _dir: str  # Direction
     _path_logs: str  # Stores path logs
     _train_current_part: int
     _train_date: str
@@ -449,8 +450,6 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
         assert self._img_cols == self._img_rows
         assert self._channels >= 1
 
-        self._info(f'Direction {self._dir}')
-
         # Register constructor
         self._register_session_data('image_shape', self._image_shape)
 
@@ -479,8 +478,8 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
         # -------------------------
 
         # Define Optimizers
-        opt_discriminator = Adam(lr=1E-4, epsilon=1e-08)
-        opt_dcgan = Adam(lr=1E-4, epsilon=1e-08)
+        opt_discriminator = Adam(lr=1e-4, epsilon=1e-08)
+        opt_dcgan = Adam(lr=1e-4, epsilon=1e-08)
         # opt_discriminator = Adam(0.0002, 0.5)
         # opt_dcgan = Adam(0.0002, 0.5)
         loss_discriminator = 'binary_crossentropy'  # MSE does not work as outputs are [0,1] or [1,0]
@@ -506,7 +505,7 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
         )
         self._check_compilation = False
 
-        # Re enable discriminator
+        # Re-enable discriminator
         self._discriminator.trainable = True
         self._discriminator.compile(
             loss=loss_discriminator,
@@ -674,14 +673,12 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
     def _load_batch(
             self,
             batch_size: int,
-            scale_to_1: bool,
             shuffle: bool
     ) -> Generator[int, Tuple['np.ndarray', 'np.ndarray'], None]:
         """
         Generate batch of elements to train.
 
         :param batch_size: Batch size
-        :param scale_to_1: Normalize to (-1, 1)
         :param shuffle: Shuffle data
         :return: Iterator of images as numpy ndarray
         """
@@ -696,9 +693,6 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
             _j = int((i + 1) * batch_size)
             _x: 'np.ndarray' = self._x[_i:_j]
             _y: 'np.ndarray' = self._y[_i:_j]
-            if scale_to_1:
-                _x = scale_array_to_range(_x, (-1, 1), 'float32')
-                _y = scale_array_to_range(_y, (-1, 1), 'float32')
             yield _x, _y
 
     def train(
@@ -714,53 +708,10 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
         """
         raise RuntimeError('Use .train_batch() instead')
 
-    def train_all_parts(
-            self,
-            epochs: int,
-            batch_size: int = 1,
-            shuffle: bool = True,
-            sample_interval: int = 50,
-            part_from: int = 1,
-            part_to: int = -1
-    ) -> None:
-        """
-        Train model with all data parts.
-
-        :param epochs: Number of epochs
-        :param batch_size: Batch size
-        :param shuffle: Shuffle data on each epoch
-        :param sample_interval: Interval to plot image samples
-        :param part_from: From part
-        :param part_to: To part, if -1 train to last
-        """
-        self._train_date = datetime.datetime.today().strftime('%Y%m%d%H%M%S')  # Initial train date
-        total_parts = self._data.total_parts
-        if part_to == -1:
-            part_to = total_parts
-        assert 1 <= part_from < part_to <= total_parts
-        print(f'Total parts to be trained: {part_to - part_from - 1}')
-        for i in range(total_parts):
-            part: int = i + 1
-            if part < part_from:
-                continue
-            if part > part_to:
-                break
-            if not self.train_batch(
-                    epochs=epochs,
-                    batch_size=batch_size,
-                    part=i + 1,
-                    shuffle=shuffle,
-                    sample_interval=sample_interval,
-                    reset_train_date=False
-            ):
-                break
-        _free()
-
     def train_batch(
             self,
             epochs: int,
             batch_size: int,
-            part: int,
             shuffle: bool,
             sample_interval: int,
             **kwargs
@@ -770,7 +721,6 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
 
         :param epochs: Number of epochs
         :param batch_size: Batch size
-        :param part: Part number
         :param shuffle: Shuffle data on each epoch
         :param sample_interval: Interval to plot image samples
         :param kwargs: Optional keyword arguments
@@ -784,17 +734,15 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
         train_date_curr: str = datetime.datetime.today().strftime('%Y/%m/%d %H:%M:%S')
         if kwargs.get('reset_train_date', True):
             self._train_date = datetime.datetime.today().strftime('%Y%m%d%H%M%S')
+        part = kwargs.get('part', 1)
         self._train_current_part = part
 
         total_parts = self._data.total_parts
         assert 1 <= part <= total_parts
         _crop_len: int = 0  # Crop to size
-        _scale_to_1: bool = True  # Crop to scale
 
         if _crop_len != 0:
             print(f'Cropping: {_crop_len} elements')
-        if not _scale_to_1:
-            print('Scale to (-1,1) is disabled')
         if not shuffle:
             print('Data is not shuffled')
 
@@ -817,12 +765,13 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
             }
 
         t_time_0 = time.time()
-        _train_msg: str = '\t[Epoch %d/%d] [Batch %d/%d] [D loss: %f, %f] [G loss: %f] time: %s'
+        _train_msg: str = '\t[Epoch %d/%d] [Batch %d/%d] [D loss: %.3f, %.3f] [G loss: %.3f] [G IoU: %.3f] time: %s'
         _error: bool = False
+        _iou: float = 0
         try:
             for epoch in range(epochs):
                 for batch_i, (imgs_A, imgs_B) in enumerate(
-                        self._load_batch(batch_size=batch_size, scale_to_1=_scale_to_1, shuffle=shuffle)
+                        self._load_batch(batch_size=batch_size, shuffle=shuffle)
                 ):
 
                     # ---------------------
@@ -837,14 +786,14 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
                         self._generator,
                         make_fake=True,
                         patch_dim=self._sub_patch_dim)
-                    d_loss_disc_f = self._discriminator.train_on_batch(x_discriminator, y_discriminator)  # [1,0]
+                    d_loss_disc_f = self._discriminator.train_on_batch(x_discriminator, y_discriminator)
                     x_discriminator, y_discriminator = _get_disc_batch(
                         imgs_A,
                         imgs_B,
                         self._generator,
                         make_fake=False,
                         patch_dim=self._sub_patch_dim)  # real
-                    d_loss_disc_t = self._discriminator.train_on_batch(x_discriminator, y_discriminator)  # [0,1]
+                    d_loss_disc_t = self._discriminator.train_on_batch(x_discriminator, y_discriminator)
                     d_loss_disc = [d_loss_disc_f[0], d_loss_disc_t[0]]  # [fake->1, real->1]
                     self._discriminator.trainable = False
 
@@ -855,19 +804,24 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
                     # Train the generators
                     valid = np.zeros((batch_size, self._out_d_patch), dtype=np.uint8)
                     valid[:, 1] = 1
-                    g_loss = self._model.train_on_batch(imgs_B, [imgs_A, valid])
-
+                    g_loss = self._model.train_on_batch(imgs_A, [imgs_B, valid])
+                    self._history['generator_loss'].append(float(g_loss[0]))
                     elapsed_time = datetime.datetime.now() - start_time
 
                     # Plot the progress
                     print(_train_msg % (epoch + 1, epochs, batch_i, self._nbatches, d_loss_disc[0], d_loss_disc[1],
-                                        g_loss[0], elapsed_time),
-                          end='\r')
+                                        g_loss[0], _iou, elapsed_time), end='\r')
 
                     # If at save interval => save generated image samples
                     if sample_interval > 0 and batch_i % sample_interval == 0:
                         self.plot.samples(epoch, batch_i, save=True)
-                        self._history['generator_loss'].append(float(g_loss[0]))
+                        n_spl = 20
+                        s_x, s_y = self._load_data_samples(n=n_spl)
+                        s_pred = self.predict(s_x)
+                        ious = []
+                        for i in range(n_spl):
+                            ious.append(iou_metric(s_y[i], s_pred[i]))
+                        _iou = sum(ious) / n_spl
 
         except KeyboardInterrupt:
             print('')
@@ -938,6 +892,23 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
         sample_id = np.random.randint(0, len(self._x), n)
         return self._x[sample_id], self._y[sample_id]
 
+    def predict_image(self, img: 'np.ndarray') -> 'np.ndarray':
+        """
+        Predict image from common input.
+
+        :param img: Image
+        :return: Image
+        """
+        if len(img) == 0:
+            return img
+        if len(img.shape) == 3:
+            img = img.reshape((-1, img.shape[0], img.shape[1], img.shape[2]))
+        pred_img = self._model.predict(img)
+        pred_img = np.where(pred_img > _IOU_THRESHOLD, 1, 0)
+        if len(pred_img.shape) == 4 and pred_img.shape[0] == 1:
+            pred_img = pred_img.reshape((pred_img.shape[1], pred_img.shape[2], pred_img.shape[3]))
+        return pred_img
+
     def predict(self, x: Any) -> Any:
         """
         Predict image.
@@ -945,8 +916,7 @@ class Pix2PixPatchGANFloorPhotoModel(GenericModel):
         :param x: Image
         :return: Predicted image
         """
-        img = self._generator.predict(scale_array_to_range(x, (-1, 1), 'float32'))
-        return scale_array_to_range(img, (0, 255), 'float32')
+        return self._generator.predict(scale_array_to_range(x, (0, 1), 'uint8'))
 
     def evaluate(self, x: Any, y: Any) -> List[float]:
         """

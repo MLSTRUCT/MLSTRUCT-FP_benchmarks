@@ -50,7 +50,7 @@ class Pix2PixPatchGANFloorPhotoModelPlot(GenericModelPlot):
 
         ax1: 'plt.Axes' = fig.add_subplot(131)
         ax1.title.set_text('Input')
-        ax1.imshow(im / 255)
+        ax1.imshow(im)
         plt.xlabel('x $(px)$')
         plt.ylabel('y $(px)$')
         plt.axis('off')
@@ -58,8 +58,7 @@ class Pix2PixPatchGANFloorPhotoModelPlot(GenericModelPlot):
 
         ax2 = fig.add_subplot(132)
         ax2.title.set_text('Output')
-        ax2.imshow(im_pred / 255)
-        # plt.xlabel('x $(px)$')
+        ax2.imshow(im_pred)
         plt.axis('off')
         configure_figure(**kwargs)
         save_figure(save, **kwargs)
@@ -78,18 +77,17 @@ class Pix2PixPatchGANFloorPhotoModelPlot(GenericModelPlot):
         """
         sample_dir: str = ''
         if save:
-            sample_dir = '%s/%s_%s/images_%s_part%s' % (
-                self._model._path_logs, self._model.get_name(True), self._model._train_date, self._model._dir,
+            sample_dir = '%s/%s_%s/images_part%s' % (
+                self._model._path_logs, self._model.get_name(True), self._model._train_date,
                 self._model._train_current_part
             )
             os.makedirs(sample_dir, exist_ok=True)
         r, c = 3, 3
 
-        imgs_a, imgs_b = self._model._load_data_samples(n=3)  # Range (0, 255)
+        imgs_a, imgs_b = self._model._load_data_samples(n=3)
         fake_a = self._model.predict(imgs_b)
 
         gen_imgs = np.concatenate([imgs_b, fake_a, imgs_a])
-        gen_imgs /= 255
 
         titles = ['Condition', 'Generated', 'Original']
         fig, axs = plt.subplots(r, c, dpi=DEFAULT_PLOT_DPI)
