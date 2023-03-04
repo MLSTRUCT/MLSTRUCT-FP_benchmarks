@@ -15,7 +15,7 @@ from keras.layers import Input, Dropout, concatenate, Conv2D, UpSampling2D, MaxP
 from keras.models import Model
 from keras.optimizers import Adam
 
-from typing import List, Tuple, Union, TYPE_CHECKING, Any, Dict, Optional
+from typing import List, Tuple, TYPE_CHECKING, Any, Dict, Optional
 import datetime
 import gc
 import numpy as np
@@ -27,7 +27,6 @@ import tensorflow as tf
 if TYPE_CHECKING:
     from ml.model.core import DataFloorPhoto
 
-_DISCRIMINATOR_LOSS: str = 'binary_crossentropy'  # 'binary_crossentropy'
 _IOU_THRESHOLD = 0.3
 
 
@@ -79,7 +78,7 @@ class UNETFloorPhotoModel(GenericModel):
         """
         Constructor.
 
-        :param data: Model data
+        :param data: Model data. Images must be between range (0, 1)
         :param name: Model name
         :param image_shape: Input shape
         :param kwargs: Optional keyword arguments
@@ -269,6 +268,7 @@ class UNETFloorPhotoModel(GenericModel):
             )
 
             _free()
+            del part_data
             if not self._is_trained:
                 print('Train failed, stopping')
                 self._print_enabled = print_enabled
@@ -305,21 +305,17 @@ class UNETFloorPhotoModel(GenericModel):
             return img
         if len(img.shape) == 3:
             img = img.reshape((-1, img.shape[0], img.shape[1], img.shape[2]))
-        # pred_img = self._g_model.predict(scale_array_to_range(img, (-1, 1), 'int8'))
-        pred_img = self._model.predict(scale_array_to_range(img, (0, 1), 'int8'))
+        pred_img = self.predict(img)
         pred_img = np.where(pred_img > _IOU_THRESHOLD, 1, 0)
-        if len(pred_img.shape) == 4:
+        if len(pred_img.shape) == 4 and pred_img.shape[0] == 1:
             pred_img = pred_img.reshape((pred_img.shape[1], pred_img.shape[2], pred_img.shape[3]))
-        # print(np.min(pred_img), np.max(pred_img))
-        # print(pred_img)
         return pred_img
-        # return scale_array_to_range(pred_img, (0, 255), 'float32')
 
-    def predict(self, x: 'np.ndarray') -> List[Union['np.ndarray', 'np.ndarray']]:  # Label, Image
+    def predict(self, x: 'np.ndarray') -> 'np.ndarray':
         """
         See upper doc.
         """
-        return self._model_predict(x=self._format_tuple(x, 'np', 'x'))
+        return self._model_predict(x=self._format_tuple(scale_array_to_range(x, (0, 1), 'uint8'), 'np', 'x'))
 
     def evaluate(self, x: 'np.ndarray', y: Tuple['np.ndarray', 'np.ndarray']) -> List[float]:
         """
