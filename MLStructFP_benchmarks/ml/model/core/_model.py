@@ -925,6 +925,7 @@ class GenericModel(ABC):
 
         self._print(f'Train initialized at: {date_train}')
         self._print(f'Train shape: {xtrain_shape} -> {ytrain_shape}')
+        self._print(f'Train shuffle: {shuffle}')
         self._print(f'Train epochs: {epochs} with batch size {batch_size}')
         self._print(f'Train validation partition: {val_split * 100:.1f}')
         self._print('')
@@ -1007,7 +1008,7 @@ class GenericModel(ABC):
         train_fit_time = time.time() - tini_fit
         if len(time_history_callback.times) > 1:
             time_history_callback.times.pop(0)  # Ignore first
-        train_fit_avg_epoch = sum(time_history_callback.times) / len(time_history_callback.times)
+        train_fit_avg_epoch = sum(time_history_callback.times) / max(1, len(time_history_callback.times))
 
         # Convert history to floats
         for k in self._history.keys():
