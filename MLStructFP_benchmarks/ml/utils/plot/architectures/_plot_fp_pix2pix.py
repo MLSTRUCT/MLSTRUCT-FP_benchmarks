@@ -49,7 +49,7 @@ class Pix2PixFloorPhotoModelPlot(GenericModelPlot):
 
         ax1: 'plt.Axes' = fig.add_subplot(131)
         ax1.title.set_text('Input')
-        ax1.imshow(im / 255)
+        ax1.imshow(im)
         plt.xlabel('x $(px)$')
         plt.ylabel('y $(px)$')
         plt.axis('off')
@@ -57,8 +57,7 @@ class Pix2PixFloorPhotoModelPlot(GenericModelPlot):
 
         ax2 = fig.add_subplot(132)
         ax2.title.set_text('Output')
-        ax2.imshow(im_pred / 255)
-        # plt.xlabel('x $(px)$')
+        ax2.imshow(im_pred)
         plt.axis('off')
         configure_figure(**kwargs)
         save_figure(save, **kwargs)
@@ -84,7 +83,7 @@ class Pix2PixFloorPhotoModelPlot(GenericModelPlot):
         assert 1 <= sample <= len(domain_sample)
         plt.figure(dpi=DEFAULT_PLOT_DPI)
         plt.axis('off')
-        plt.imshow(domain_sample[sample - 1] / 255)
+        plt.imshow(domain_sample[sample - 1])
         kwargs['cfg_grid'] = False
         configure_figure(**kwargs)
         save_figure(save, **kwargs)
@@ -111,21 +110,21 @@ class Pix2PixFloorPhotoModelPlot(GenericModelPlot):
         plt.figure(dpi=DEFAULT_PLOT_DPI)
         plt.style.use(DEFAULT_PLOT_STYLE)
 
-        # plot real source images
+        # Plot real source images
         for i in range(n_samples):
             plt.subplot(3, n_samples, 1 + i)
             plt.axis('off')
-            plt.imshow(sample['input'][i] / 255)
-        # plot generated target image
+            plt.imshow(sample['input'][i])
+        # Plot generated target image
         for i in range(n_samples):
             plt.subplot(3, n_samples, 1 + n_samples + i)
             plt.axis('off')
-            plt.imshow(sample['predicted'][i] / 255)
-        # plot real target image
+            plt.imshow(sample['predicted'][i])
+        # Plot real target image
         for i in range(n_samples):
             plt.subplot(3, n_samples, 1 + n_samples * 2 + i)
             plt.axis('off')
-            plt.imshow(sample['real'][i] / 255)
+            plt.imshow(sample['real'][i])
 
         save_figure(save, **kwargs)
         plt.show()

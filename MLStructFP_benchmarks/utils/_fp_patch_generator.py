@@ -227,15 +227,41 @@ class FloorPatchGenerator(object):
 
         return self
 
-    def plot_patch(self, idx: int) -> None:
+    def plot_patch(self, idx: int, inverse: bool = False) -> None:
         """
         Plot a given pair of binary/photo images.
 
         :param idx: Index of the image pair
+        :param inverse: If true, plot inversed colors (white as background)
         """
         plt.figure(dpi=DEFAULT_PLOT_DPI)
-        plt.subplot(121), plt.imshow(self._patch_photo[idx], cmap='gray' if self._bw else None)
-        plt.subplot(122), plt.imshow(self._patch_binary[idx], cmap='gray')
+        photo = self._patch_photo[idx]
+        binary = self._patch_binary[idx]
+        if inverse:
+            if not self._bw:
+                photo = 255 - photo
+            else:
+                photo = 1 - photo
+            binary = 1 - binary
+        plt.subplot(121), plt.imshow(photo, cmap='gray' if self._bw else None)
+        plt.subplot(122), plt.imshow(binary, cmap='gray')
+
+    def plot_photo(self, idx: int, inverse: bool = False) -> None:
+        """
+        Plot a single photo from a given patch.
+
+        :param idx: Index of the image pair
+        :param inverse: If true, plot inversed colors (white as background)
+        """
+        plt.figure(dpi=DEFAULT_PLOT_DPI)
+        photo = self._patch_photo[idx]
+        if inverse:
+            if not self._bw:
+                photo = 255 - photo
+            else:
+                photo = 1 - photo
+        plt.axis('off')
+        plt.imshow(photo, cmap='gray' if self._bw else None)
 
     def plot_patches(
             self,

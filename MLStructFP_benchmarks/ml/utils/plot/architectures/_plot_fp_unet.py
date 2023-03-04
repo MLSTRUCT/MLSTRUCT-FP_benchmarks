@@ -6,10 +6,11 @@ Model plot.
 
 __all__ = ['UNETFloorPhotoModelPlot']
 
+from MLStructFP_benchmarks.ml.utils import iou_metric
 from MLStructFP_benchmarks.ml.utils.plot._plot_model import GenericModelPlot
 from MLStructFP.utils import save_figure, DEFAULT_PLOT_STYLE, DEFAULT_PLOT_DPI, configure_figure
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -97,17 +98,30 @@ class UNETFloorPhotoModelPlot(GenericModelPlot):
         for i in range(n_samples):
             plt.subplot(3, n_samples, 1 + i)
             plt.axis('off')
-            plt.imshow(sample['input'][i] / 255)
+            plt.imshow(sample['input'][i])
         # plot generated target image
         for i in range(n_samples):
             plt.subplot(3, n_samples, 1 + n_samples + i)
             plt.axis('off')
-            plt.imshow(sample['predicted'][i] / 255)
+            plt.imshow(sample['predicted'][i])
         # plot real target image
         for i in range(n_samples):
             plt.subplot(3, n_samples, 1 + n_samples * 2 + i)
             plt.axis('off')
-            plt.imshow(sample['real'][i] / 255)
+            plt.imshow(sample['real'][i])
 
         save_figure(save, **kwargs)
         plt.show()
+
+    def test(self, data: Dict[str, 'np.ndarray'], idx: int) -> None:
+        """
+        Plot test data.
+
+        :param data: Data
+        :param idx: Index to plot
+        """
+        img_in = data['photo'][idx]
+        img_pred = self._model.predict_image(img_in)
+        img_true = data['binary'][idx]
+        print(f'IoU: {iou_metric(img_true, img_pred)}')
+        self.plot_predict(img_in, img_true)
