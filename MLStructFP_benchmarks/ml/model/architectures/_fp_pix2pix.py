@@ -8,7 +8,7 @@ __all__ = ['Pix2PixFloorPhotoModel']
 
 # noinspection PyProtectedMember
 from MLStructFP_benchmarks.ml.model.core._model import GenericModel, _PATH_SESSION, _PATH_LOGS
-from MLStructFP_benchmarks.ml.utils import scale_array_to_range
+from MLStructFP_benchmarks.ml.utils import scale_array_to_range, iou_metric
 from MLStructFP_benchmarks.ml.utils.plot.architectures import Pix2PixFloorPhotoModelPlot
 from MLStructFP.utils import DEFAULT_PLOT_DPI, DEFAULT_PLOT_STYLE
 
@@ -25,12 +25,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import random
+import tensorflow as tf
 import time
 
 if TYPE_CHECKING:
     from ml.model.core import DataFloorPhoto
 
-_DISCRIMINATOR_LOSS: str = 'binary_crossentropy'  # 'binary_crossentropy'
+_IOU_THRESHOLD = 0.3
 
 
 def _free() -> None:
@@ -40,6 +41,17 @@ def _free() -> None:
     time.sleep(1)
     gc.collect()
     time.sleep(1)
+
+
+def iou(y_true, y_pred):
+    """
+    IoU metric.
+
+    :param y_true: True value matrix
+    :param y_pred: Predicted matrix
+    :return: Tf function to be used as a metric
+    """
+    return tf.py_function(iou_metric, [y_true, y_pred, _IOU_THRESHOLD], tf.float32)
 
 
 class Pix2PixFloorPhotoModel(GenericModel):
@@ -149,7 +161,7 @@ class Pix2PixFloorPhotoModel(GenericModel):
         self.compile(
             optimizer=Adam(lr=0.0002, beta_1=0.5),
             loss={
-                self._output_layers[0]: _DISCRIMINATOR_LOSS,  # Discriminator
+                self._output_layers[0]: 'binary_crossentropy',  # Discriminator
                 self._output_layers[1]: 'mae'  # Generator
             },
             loss_weights={
@@ -158,7 +170,7 @@ class Pix2PixFloorPhotoModel(GenericModel):
             },
             metrics={
                 self._output_layers[0]: None,  # Discriminator
-                self._output_layers[1]: 'accuracy'  # Generator
+                self._output_layers[1]: [iou, 'accuracy']  # Generator
             }
         )
         self._check_compilation = False
@@ -168,16 +180,12 @@ class Pix2PixFloorPhotoModel(GenericModel):
 
         # Compile discriminator model
         self._d_model.compile(
-            loss=_DISCRIMINATOR_LOSS,
+            loss='binary_crossentropy',
             optimizer=Adam(lr=0.0002, beta_1=0.5),
-            loss_weights=[0.5]
         )
 
         # Compute patch shape
-        # self._patch = int(self._img_size / 2 ** 4)  # self._d_model.output_shape[1]
         self._patch = self._d_model.output_shape[1]
-
-        # assert self._patch == self._d_model.output_shape[1], 'Invalid patch size'
         self._info('Patch shape ({0},{0}) ({1}/16)'.format(self._patch, self._image_shape[0]))
         self._register_session_data('patch', self._patch)
 
@@ -189,7 +197,6 @@ class Pix2PixFloorPhotoModel(GenericModel):
         self._custom_stateful_metrics = []
 
         # As this model does not converge, this will enable checkpoint
-        # self.enable_model_checkpoint(epochs=1)
         self.plot = Pix2PixFloorPhotoModelPlot(self)
 
     def _info(self, msg: str) -> None:
@@ -367,16 +374,28 @@ class Pix2PixFloorPhotoModel(GenericModel):
         e3 = define_encoder_block(e2, 4 * gf)
         e4 = define_encoder_block(e3, 8 * gf)
         e5 = define_encoder_block(e4, 8 * gf)
-        e6 = define_encoder_block(e5, 8 * gf)
-        e7 = define_encoder_block(e6, 8 * gf)
+        if self._image_shape[0] >= 128:
+            e6 = define_encoder_block(e5, 8 * gf)
+        else:
+            e6 = e5
+        if self._image_shape[0] >= 256:
+            e7 = define_encoder_block(e6, 8 * gf)
+        else:
+            e7 = e6
 
         # Bottleneck, no batch norm and relu
         b = Conv2D(8 * gf, (4, 4), strides=(2, 2), padding='same', kernel_initializer=init)(e7)
         b = Activation('relu')(b)
 
         # Decoder model
-        d1 = decoder_block(b, e7, 8 * gf)
-        d2 = decoder_block(d1, e6, 8 * gf)
+        if self._image_shape[0] >= 256:
+            d1 = decoder_block(b, e7, 8 * gf)
+        else:
+            d1 = b
+        if self._image_shape[0] >= 128:
+            d2 = decoder_block(d1, e6, 8 * gf)
+        else:
+            d2 = b
         d3 = decoder_block(d2, e5, 512)
         d4 = decoder_block(d3, e4, 8 * gf, dropout=False)
         d5 = decoder_block(d4, e3, 4 * gf, dropout=False)
@@ -385,7 +404,7 @@ class Pix2PixFloorPhotoModel(GenericModel):
 
         # Output
         g = Conv2DTranspose(output_shape[2], (4, 4), strides=(2, 2), padding='same', kernel_initializer=init)(d7)
-        out_image = Activation('tanh', name='out_' + self._output_layers[1])(g)
+        out_image = Activation('sigmoid', name='out_' + self._output_layers[1])(g)
 
         # Define model
         model = Model(inputs=in_image, outputs=out_image, name=self._output_layers[1])
@@ -467,15 +486,15 @@ class Pix2PixFloorPhotoModel(GenericModel):
 
         # Update the generator, this does not train discriminator as weights
         # were defined as not trainable
-        # 'loss', 'discriminator_loss', 'generator_loss', 'generator_accuracy'
-        g_loss, gd_loss, gg_loss, g_acc = self._model.train_on_batch(
+        # 'loss', 'discriminator_loss', 'generator_loss', 'generator_iou', 'generator_accuracy'
+        g_loss, gd_loss, gg_loss, g_iou, g_acc = self._model.train_on_batch(
             x=ximg_real,
             y=[ylabel_real, yimg_real],
             sample_weight=[ylabel_weights, yimg_weights]
         )
 
         del yimg_fake, ylabel_fake
-        return [g_loss, gd_loss, gg_loss, g_acc, d_real_loss, d_fake_loss]
+        return [g_loss, gd_loss, gg_loss, g_iou, g_acc, d_real_loss, d_fake_loss]
 
     def _custom_val_function(self, inputs) -> List[float]:
         """
@@ -516,16 +535,16 @@ class Pix2PixFloorPhotoModel(GenericModel):
         )
 
         # Evaluate the generator
-        # 'loss', 'discriminator_loss', 'generator_loss', 'generator_accuracy'
-        g_loss, gd_loss, gg_loss, g_acc = self._model.evaluate(
+        # 'loss', 'discriminator_loss', 'generator_loss', 'generator_iou', 'generator_accuracy'
+        g_loss, gd_loss, gg_loss, g_iou, g_acc = self._model.evaluate(
             x=ximg_real,
-            y=[ylabel_real, yimg_real],
+            y=[ylabel_real, yimg_real],  # discriminator, generator
             sample_weight=[ylabel_weights, yimg_weights],
             verbose=False
         )
 
         del yimg_fake, ylabel_fake
-        return [g_loss, gd_loss, gg_loss, g_acc, d_real_loss, d_fake_loss]
+        return [g_loss, gd_loss, gg_loss, g_iou, g_acc, d_real_loss, d_fake_loss]
 
     def _custom_epoch_finish_function(self, num_epoch: int) -> None:
         """
@@ -541,21 +560,21 @@ class Pix2PixFloorPhotoModel(GenericModel):
         plt.title(f'Epoch {num_epoch}')
         sample['predicted'] = self.predict_image(sample['input'])
 
-        # plot real source images
+        # Plot real source images
         for i in range(n_samples):
             plt.subplot(3, n_samples, 1 + i)
             plt.axis('off')
-            plt.imshow(sample['input'][i] / 255)
-        # plot generated target image
+            plt.imshow(sample['input'][i])
+        # Plot generated target image
         for i in range(n_samples):
             plt.subplot(3, n_samples, 1 + n_samples + i)
             plt.axis('off')
-            plt.imshow(sample['predicted'][i] / 255)
-        # plot real target image
+            plt.imshow(sample['predicted'][i])
+        # Plot real target image
         for i in range(n_samples):
             plt.subplot(3, n_samples, 1 + n_samples * 2 + i)
             plt.axis('off')
-            plt.imshow(sample['real'][i] / 255)
+            plt.imshow(sample['real'][i])
 
         fig_file: str = '{6}{0}{1}{2}_{3}_part_{4}_epoch{5}.png'.format(
             _PATH_LOGS, os.path.sep, self.get_name(True), self._current_train_date,
@@ -600,7 +619,7 @@ class Pix2PixFloorPhotoModel(GenericModel):
             print(f'Resuming train, last processed part: {max(list(self._samples.keys()))}')
 
         # Get number of samples
-        n_samples = kwargs.get('n_samples', 0)
+        n_samples = kwargs.get('n_samples', 3)
         assert isinstance(n_samples, int)
         assert n_samples >= 0
         if n_samples > 0:
@@ -655,7 +674,7 @@ class Pix2PixFloorPhotoModel(GenericModel):
                 compute_metrics=False
             )
 
-            del xtrain_img, ytrain_img, ytrain_label
+            del xtrain_img, ytrain_img, ytrain_label, part_data
             _free()
             if not self._is_trained:
                 print('Train failed, stopping')
@@ -689,20 +708,21 @@ class Pix2PixFloorPhotoModel(GenericModel):
         :param img: Image
         :return: Image
         """
+        if len(img) == 0:
+            return img
         if len(img.shape) == 3:
             img = img.reshape((-1, img.shape[0], img.shape[1], img.shape[2]))
-        # pred_img = self._g_model.predict(scale_array_to_range(img, (-1, 1), 'int8'))
-        pred_img = self._model.predict(scale_array_to_range(img, (-1, 1), 'int8'))[1]
-        # print(np.min(pred_img), np.max(pred_img))
-        # print(pred_img)
-        # return pred_img
-        return scale_array_to_range(pred_img, (0, 255), 'float32')
+        pred_img = self.predict(img)
+        pred_img = np.where(pred_img > _IOU_THRESHOLD, 1, 0)
+        if len(pred_img.shape) == 4 and pred_img.shape[0] == 1:
+            pred_img = pred_img.reshape((pred_img.shape[1], pred_img.shape[2], pred_img.shape[3]))
+        return pred_img
 
-    def predict(self, x: 'np.ndarray') -> List[Union['np.ndarray', 'np.ndarray']]:  # Label, Image
+    def predict(self, x: 'np.ndarray') -> 'np.ndarray':  # Image
         """
         See upper doc.
         """
-        return self._model_predict(x=self._format_tuple(x, 'np', 'x'))
+        return self._model_predict(x=self._format_tuple(scale_array_to_range(x, (0, 1), 'uint8'), 'np', 'x'))[1]
 
     def evaluate(self, x: 'np.ndarray', y: Tuple['np.ndarray', 'np.ndarray']) -> List[float]:
         """
