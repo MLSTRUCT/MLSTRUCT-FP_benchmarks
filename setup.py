@@ -20,6 +20,7 @@ requirements = [
     'matplotlib == 3.5.3',
     'MLStructFP == 0.3.1',
     'numpy == 1.18.5'
+    'scikit-learn == 1.2.0'
 ]
 
 if os.environ.get('GITHUB') != 'true':
