@@ -32,7 +32,7 @@ def binary_accuracy_metric(y_true: 'np.ndarray', y_pred: 'np.ndarray') -> float:
     return float(r)
 
 
-def iou_metric(y_true: 'np.ndarray', y_pred: 'np.ndarray', threshold: Union[float, 'tf.Tensor'] = 0) -> 'np.ndarray':
+def iou_metric(y_true: 'np.ndarray', y_pred: 'np.ndarray', threshold: Union[float, 'tf.Tensor'] = 0) -> float:
     """
     Compute IoU.
 
@@ -52,7 +52,7 @@ def iou_metric(y_true: 'np.ndarray', y_pred: 'np.ndarray', threshold: Union[floa
         intersect = np.sum(y_true[i, :, :] * y_pred[i, :, :])
         union = np.sum(y_true[i, :, :]) + np.sum(y_pred[i, :, :]) - intersect + 1e-7
         results.append(np.mean((intersect / union)).astype(np.float32))
-    return np.mean(results)
+    return float(np.mean(results))
 
 
 def r2_score_metric(y_true: 'tf.Tensor', y_pred: 'tf.Tensor') -> float:

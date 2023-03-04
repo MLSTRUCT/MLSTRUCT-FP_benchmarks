@@ -61,16 +61,6 @@ def load_model_from_session(
             data=None, name=data['name'], path=parent_dir,
             image_shape=tuple(sdata['image_shape'])
         )
-    elif session_class == 'Pix2PixFloorPhotoModModel':
-        model = fparch.Pix2PixFloorPhotoModModel(
-            data=None, name=data['name'], path=parent_dir,
-            image_shape=tuple(sdata['image_shape'])
-        )
-    elif session_class == 'Pix2PixPatchGANFloorPhotoModel':
-        model = fparch.Pix2PixPatchGANFloorPhotoModel(
-            data=None, name=data['name'], path=parent_dir,
-            image_shape=tuple(sdata['image_shape'])
-        )
     elif session_class == 'Pix2PixFloorPhotoModel':
         model = fparch.Pix2PixFloorPhotoModel(
             data=None, name=data['name'], path=parent_dir,
