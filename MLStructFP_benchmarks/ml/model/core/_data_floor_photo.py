@@ -21,6 +21,7 @@ import numpy as np
 import os
 import random
 import time
+import zipfile
 
 _DATA_DTYPE: str = 'uint8'
 _SESSION_EXPORT_VERSION: str = '1.0'
@@ -56,6 +57,24 @@ def _is_dict_equal(x: Dict[Any, Any], y: Dict[Any, Any]) -> bool:
             if xki != yki:
                 return False
     return True
+
+
+# noinspection PyUnresolvedReferences
+def _npz_headers(npz: str):
+    """
+    Takes a path to an .npz file, which is a Zip archive of .npy files.
+    Generates a sequence of (name, shape, np.dtype).
+    """
+    with zipfile.ZipFile(npz) as archive:
+        for name in archive.namelist():
+            if not name.endswith('.npy'):
+                continue
+
+            npy = archive.open(name)
+            version = np.lib.format.read_magic(npy)
+            # noinspection PyProtectedMember
+            shape, fortran, dtype = np.lib.format._read_array_header(npy, version)
+            yield name[:-4], shape, dtype
 
 
 class DataFloorPhoto(object):
@@ -148,7 +167,7 @@ class DataFloorPhoto(object):
         :return: Binary/Photo data. Images are within (0, 1) range
         """
         img_b: 'np.ndarray'
-        imb_p: 'np.ndarray'
+        img_p: 'np.ndarray'
         if len(self._split) == 0 or ignore_split:
             assert 1 <= part <= len(self._parts), f'Number of parts overflow, min:1, max:{len(self._parts)}'
             f = self._get_file(self._parts[part - 1])
@@ -156,13 +175,36 @@ class DataFloorPhoto(object):
             img_p = np.load(f[1])['data']  # Photo
         else:
             assert part in (1, 2), '1 returns train, 2 test. No other part value allowed'
-            train_b, train_p = [], []
+            # First, get all images size and create a numpy zero object
+            imgs = 0
+            sizes: Dict[int, int] = {}  # Size for each part
+            for i in self._split[part - 1]:  # Iterate train parts
+                i_info = list(_npz_headers(self._get_file(i)[0]))[0]  # ('data', (N, SIZE, SIZE), dtype('DTYPE'))
+                i_shp = i_info[1]
+                assert i_shp[1] == i_shp[2] == self._floor_photo_size, \
+                    'Each image part must have size ({0}, {0})'.format(self._floor_photo_size)
+                assert i_info[2] == _DATA_DTYPE, \
+                    f'Data type does not match, requires {_DATA_DTYPE}, but {i_info[2]} was provided when loading parts'
+                imgs += i_shp[0]
+                sizes[i] = i_shp[0]
+
+            # Create empty numpy shape
+            new_shape = (imgs, self._floor_photo_size, self._floor_photo_size)
+            if self._floor_photo_ch != 1:
+                new_shape = (*new_shape, self._floor_photo_size)
+            img_b = np.zeros(new_shape, dtype=_DATA_DTYPE)
+            img_p = np.zeros(new_shape, dtype=_DATA_DTYPE)
+
+            j = 0  # Index of add
+            k = 0  # Number of processed parts
             for i in self._split[part - 1]:  # Iterate train parts
                 f = self._get_file(i)
-                train_b.append(np.load(f[0])['data'])  # Binary
-                train_p.append(np.load(f[1])['data'])  # Photo
-            img_b = np.concatenate(train_b)
-            img_p = np.concatenate(train_p)
+                img_b[j:j + sizes[i]] = np.load(f[0])['data']  # Binary
+                img_p[j:j + sizes[i]] = np.load(f[1])['data']  # Photo
+                j += sizes[i]
+                k += 1
+                if k % 50 == 0:
+                    gc.collect()
 
         # Convert type
         if img_b.dtype != _DATA_DTYPE:
