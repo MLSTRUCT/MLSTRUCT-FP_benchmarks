@@ -2192,8 +2192,6 @@ class GenericModel(ABC):
 
                 # Get current architectures
                 current_arch = self._model.to_json(indent=2)
-                # with open(filename + '_eval_architecture.dat', 'w', encoding='utf-8') as json_file:
-                #     json_file.write(current_arch)
 
                 # Calculate the difference between architectures files
                 arch_file = open(file_arch, 'r')

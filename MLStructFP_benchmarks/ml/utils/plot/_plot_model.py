@@ -174,8 +174,6 @@ def compare_metrics_from_csv(
 
     # X limit
     limx = min(limx, maxepoch)
-    # if limx > maxepoch:
-    #     raise ValueError('Epoch limit cannot exceed max epochs')
     if limx <= 1:
         limx = maxepoch
     if limx > 1:
