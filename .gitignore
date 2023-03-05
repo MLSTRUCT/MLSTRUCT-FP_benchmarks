@@ -27,4 +27,5 @@ _dev_*
 .out_hr/
 .out/
 .session/
+*.xlsx
 ~$*
