@@ -6,9 +6,8 @@ Pix2Pix generation.
 
 __all__ = ['Pix2PixFloorPhotoModel']
 
-# noinspection PyProtectedMember
-from MLStructFP_benchmarks.ml.model.core._model import GenericModel, _PATH_SESSION, _PATH_LOGS
-from MLStructFP_benchmarks.ml.utils import scale_array_to_range, iou_metric
+from MLStructFP_benchmarks.ml.model.architectures._fp_base import *
+from MLStructFP_benchmarks.ml.utils import scale_array_to_range
 from MLStructFP_benchmarks.ml.utils.plot.architectures import Pix2PixFloorPhotoModelPlot
 from MLStructFP.utils import DEFAULT_PLOT_DPI, DEFAULT_PLOT_STYLE
 
@@ -18,57 +17,22 @@ from keras.layers import Input, Dropout, LeakyReLU, BatchNormalization, \
 from keras.models import Model
 from keras.optimizers import Adam
 
-from typing import List, Tuple, Union, TYPE_CHECKING, Any, Dict, Optional
+from typing import List, Tuple, Union, TYPE_CHECKING, Optional
 import datetime
-import gc
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-import random
-import tensorflow as tf
-import time
 
 if TYPE_CHECKING:
     from ml.model.core import DataFloorPhoto
 
-_IOU_THRESHOLD = 0.3
 
-
-def _free() -> None:
-    """
-    Free memory fun.
-    """
-    time.sleep(1)
-    gc.collect()
-    time.sleep(1)
-
-
-def iou(y_true, y_pred):
-    """
-    IoU metric.
-
-    :param y_true: True value matrix
-    :param y_pred: Predicted matrix
-    :return: Tf function to be used as a metric
-    """
-    return tf.py_function(iou_metric, [y_true, y_pred, _IOU_THRESHOLD], tf.float32)
-
-
-class Pix2PixFloorPhotoModel(GenericModel):
+class Pix2PixFloorPhotoModel(BaseFloorPhotoModel):
     """
     Pix2Pix floor photo model image generation.
     """
-    _data: 'DataFloorPhoto'
-    _samples: Dict[int, Dict[str, 'np.ndarray']]  # Samples for each part
-
-    # Train
     _current_train_date: str
     _current_train_part: int
-
-    # Image properties
-    _img_channels: int
-    _img_size: int
-    _image_shape: Tuple[int, int, int]
 
     # Models
     _d_model: 'Model'
@@ -93,28 +57,9 @@ class Pix2PixFloorPhotoModel(GenericModel):
         :param kwargs: Optional keyword arguments
         """
 
-        # Load data
-        GenericModel.__init__(self, name=name, path=kwargs.get('path', ''))
-
+        # Create base model
+        BaseFloorPhotoModel.__init__(self, data, name, image_shape, **kwargs.get('path', ''))
         self._output_layers = ['discriminator', 'generator']
-
-        # Input shape
-        if data is not None:
-            assert data.__class__.__name__ == 'DataFloorPhoto', \
-                f'Invalid data class <{data.__class__.__name__}>'
-            self._data = data
-            self._image_shape = data.get_image_shape()
-        else:
-            assert image_shape is not None, 'If data is none, input_shape must be provided'
-            assert isinstance(image_shape, tuple)
-            assert len(image_shape) == 3
-            assert image_shape[0] == image_shape[1]
-            self._image_shape = image_shape
-
-        self._img_size = self._image_shape[0]
-        self._info(f'Image shape {self._image_shape}')
-
-        self._samples = {}
 
         # Register constructor data
         self._register_session_data('image_shape', self._image_shape)
@@ -198,16 +143,6 @@ class Pix2PixFloorPhotoModel(GenericModel):
 
         # As this model does not converge, this will enable checkpoint
         self.plot = Pix2PixFloorPhotoModelPlot(self)
-
-    def _info(self, msg: str) -> None:
-        """
-        Information to console.
-
-        :param msg: Message
-        """
-        if self._production:
-            return
-        self._print(f'Pix2PixFloorPhoto: {msg}')
 
     def get_patch_size(self) -> int:
         """
@@ -582,13 +517,6 @@ class Pix2PixFloorPhotoModel(GenericModel):
         plt.savefig(fig_file)
         plt.close()
 
-    def reset_train(self) -> None:
-        """
-        Reset train.
-        """
-        super().reset_train()
-        self._samples.clear()
-
     def train(
             self,
             epochs: int,
@@ -624,7 +552,7 @@ class Pix2PixFloorPhotoModel(GenericModel):
         assert n_samples >= 0
         if n_samples > 0:
             print(f'Evaluation samples: {n_samples}')
-        _free()
+        free()
 
         # Get total parts to be processed
         n_parts: int = kwargs.get('n_parts', -1)
@@ -646,7 +574,7 @@ class Pix2PixFloorPhotoModel(GenericModel):
             xtrain_img: 'np.ndarray' = part_data['photo']
             ytrain_img: 'np.ndarray' = part_data['binary']
             ytrain_label = self.generate_true_labels(len(ytrain_img))
-            _free()
+            free()
 
             # Make sample inputs
             sample_id = np.random.randint(0, len(xtrain_img), n_samples)
@@ -675,7 +603,7 @@ class Pix2PixFloorPhotoModel(GenericModel):
             )
 
             del xtrain_img, ytrain_img, ytrain_label, part_data
-            _free()
+            free()
             if not self._is_trained:
                 print('Train failed, stopping')
                 self._verbose = verbose
@@ -701,23 +629,6 @@ class Pix2PixFloorPhotoModel(GenericModel):
         # Restore verbose
         self._verbose = verbose
 
-    def predict_image(self, img: 'np.ndarray') -> 'np.ndarray':
-        """
-        Predict image from common input.
-
-        :param img: Image
-        :return: Image
-        """
-        if len(img) == 0:
-            return img
-        if len(img.shape) == 3:
-            img = img.reshape((-1, img.shape[0], img.shape[1], img.shape[2]))
-        pred_img = self.predict(img)
-        pred_img = np.where(pred_img > _IOU_THRESHOLD, 1, 0)
-        if len(pred_img.shape) == 4 and pred_img.shape[0] == 1:
-            pred_img = pred_img.reshape((pred_img.shape[1], pred_img.shape[2], pred_img.shape[3]))
-        return pred_img
-
     def predict(self, x: 'np.ndarray') -> 'np.ndarray':  # Image
         """
         See upper doc.
@@ -732,29 +643,3 @@ class Pix2PixFloorPhotoModel(GenericModel):
             x=self._format_tuple(x, 'np', 'x'),
             y=self._format_tuple(y, ('np', 'np'), 'y')
         )
-
-    def _custom_save_session(self, filename: str, data: dict) -> None:
-        """
-        See upper doc.
-        """
-        # Save samples dict
-        if len(self._samples.keys()) > 0:
-            if self._get_session_data('train_samples') is None:
-                self._register_session_data('train_samples', _PATH_SESSION +
-                                            os.path.sep + f'samples_{random.getrandbits(64)}.npz')
-            samples_f = self._get_session_data('train_samples')
-            np.savez_compressed(samples_f, data=self._samples)
-
-    def _custom_load_session(
-            self,
-            filename: str,
-            asserts: bool,
-            data: Dict[str, Any],
-            check_hash: bool
-    ) -> None:
-        """
-        See upper doc.
-        """
-        samples_f: str = self._get_session_data('train_samples')  # Samples File
-        if samples_f is not None:
-            self._samples = np.load(samples_f, allow_pickle=True)['data'].item()

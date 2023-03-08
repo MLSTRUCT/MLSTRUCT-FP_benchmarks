@@ -927,7 +927,7 @@ class GenericModel(ABC):
         self._print(f'Train shape: {xtrain_shape} -> {ytrain_shape}')
         self._print(f'Train shuffle: {shuffle}')
         self._print(f'Train epochs: {epochs} with batch size {batch_size}')
-        self._print(f'Train validation partition: {val_split * 100:.1f}')
+        self._print(f'Train validation partition: {val_split * 100:.1f}%')
         self._print('')
 
         self._print(f'Metrics: {self.get_metric_names()}')
