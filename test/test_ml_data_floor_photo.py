@@ -59,6 +59,8 @@ class UtilsTest(unittest.TestCase):
         Test train/test split.
         """
         data = DataFloorPhoto(self._out, shuffle_parts=True).assemble_train_test(0.7)
+        self.assertEqual(data.total_parts, 1)  # Because train/test was defined
+        self.assertEqual(data.total_images, 817)
         self.assertEqual(data.train_split, 0.57)
         tr_s = 0
         for i in data._split[0]:

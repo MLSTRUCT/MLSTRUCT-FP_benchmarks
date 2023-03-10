@@ -157,6 +157,17 @@ class DataFloorPhoto(object):
         """
         return len(self._parts) if len(self._split) == 0 else 1
 
+    @property
+    def total_images(self) -> int:
+        """
+        :return: Number of total images
+        """
+        total = 0
+        for i in self._parts:  # Iterate each part
+            i_info = list(_npz_headers(self._get_file(i)[0]))[0]  # ('data', (N, SIZE, SIZE), dtype('DTYPE'))
+            total += i_info[1][0]
+        return total
+
     def load_part(self, part: int, shuffle: bool = False, ignore_split: bool = False) -> Dict[str, 'np.ndarray']:
         """
         Load part and save into memory.

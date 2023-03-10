@@ -2011,6 +2011,7 @@ class GenericModel(ABC):
         if filename == '':
             filename = self._name_formatted
         filename = os.path.splitext(filename)[0]
+        self._print(f'Saving session to: {filename}')
 
         # Files
         file_weights: str = filename + '_weights.h5'
