@@ -21,7 +21,11 @@ import gc
 import matplotlib.pyplot as plt
 import math
 import numpy as np
+import skimage.color
+import skimage.io
 
+from PIL import Image
+from skimage.filters import sobel  # prewitt, scharr
 from typing import List, Tuple, Optional, TYPE_CHECKING, Union
 from warnings import warn
 
@@ -299,7 +303,7 @@ class FloorPatchGenerator(object):
         if not inverse or model:
             ax.set_facecolor('#000000')
         for r in floor.rect:
-            r.plot_matplotlib(ax, color='#000000' if not photo else '#ffffff', alpha=0)
+            r.plot_matplotlib(ax, alpha=0)
         if patches:
             for p in self._make_patches(floor, apply_delta=True):
                 n, origin, xmin, xmax, ymin, ymax, pid = p
@@ -332,5 +336,70 @@ class FloorPatchGenerator(object):
             plt.xlabel('x (m)')
             plt.ylabel('y (m)')
         else:
-            plt.axis('off')
+            ax.axis('off')
         configure_figure(cfg_grid=False)
+        fig.patch.set_visible(False)
+        fig.tight_layout(pad=0)
+
+    def plot_model(self, floor: 'Floor', model: 'BaseFloorPhotoModel', save: str, outline: bool = False) -> None:
+        """
+        Plot a given model into a rasterized image.
+
+        :param floor: Floor to plot
+        :param model: Model
+        :param save: Save file
+        :param outline: If true, apply outline algorithm
+        """
+        ax: 'plt.Axes'
+        fig, ax = plt.subplots(dpi=DEFAULT_PLOT_DPI)
+        ax.set_aspect('equal')
+        ax.set_facecolor('#000000')
+        for r in floor.rect:
+            r.plot_matplotlib(ax, alpha=0)
+        lim_x = ax.get_xlim()
+        lim_y = ax.get_ylim()
+        for p in self._make_patches(floor, apply_delta=False):  # Add images
+            _, _, xmin, xmax, ymin, ymax, _ = p
+            plt.imshow(
+                1 - model.predict_image(self._process_photo(xmin, xmax, ymin, ymax, floor), threshold=False),
+                cmap='binary',
+                extent=[xmin, xmax, ymin, ymax], origin='upper')
+        plt.xlim(lim_x)
+        plt.ylim(lim_y)
+        ax.axis('off')
+        fig.patch.set_visible(False)
+        fig.tight_layout(pad=0)
+        with open(save, 'wb') as outfile:
+            fig.canvas.print_png(outfile)
+        plt.close()
+        _crop_image(save)
+
+        # Apply outline
+        if outline:
+            gray_img = skimage.color.rgb2gray(skimage.color.rgba2rgb(skimage.io.imread(save)))
+            fig, ax = plt.subplots(ncols=1, nrows=1, dpi=DEFAULT_PLOT_DPI)
+            fig.tight_layout()
+            ax.imshow(sobel(gray_img), cmap='gray')
+            ax.axis('off')
+            fig.patch.set_visible(False)
+            plt.savefig(save)
+            plt.close()
+            _crop_image(save)
+
+
+def _crop_image(image_name: str) -> None:
+    """
+    Crop a transparent box from a given image.
+
+    :param image_name: Image path
+    """
+    # noinspection PyTypeChecker
+    np_array = np.array(Image.open(image_name))
+    blank_px = [255, 255, 255, 0]
+    mask = np_array != blank_px
+    coords = np.argwhere(mask)
+    x0, y0, z0 = coords.min(axis=0)
+    x1, y1, z1 = coords.max(axis=0) + 1
+    cropped_box = np_array[x0:x1, y0:y1, z0:z1]
+    pil_image = Image.fromarray(cropped_box, 'RGBA')
+    pil_image.save(image_name)
