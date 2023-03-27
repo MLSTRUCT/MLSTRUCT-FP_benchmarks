@@ -18,6 +18,15 @@ build/
 dist/
 *.egg-info
 
+# Vectorization
+dvec/data
+dvec/docker
+dvec/notebooks
+dvec/scripts
+
+# Model weights
+dvec/**/*.weights
+
 # Other
 _dev_*
 .checkpoint/
