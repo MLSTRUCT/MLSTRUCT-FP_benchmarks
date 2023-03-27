@@ -32,41 +32,60 @@ class UNETFloorPhotoModelPlot(GenericModelPlot):
         """
         super().__init__(model)
 
-    def plot_predict(self, im: 'np.ndarray', real: 'np.ndarray', save: str = '', **kwargs) -> None:
+    def plot_predict(
+            self,
+            im: 'np.ndarray',
+            real: 'np.ndarray',
+            save: str = '',
+            inverse: bool = False,
+            threshold: bool = True,
+            title: bool = True,
+            **kwargs
+    ) -> None:
         """
         Predict and plot image.
 
         :param im: Image to predict
         :param real: Real image
         :param save: Save figure to file
+        :param inverse: If true, plot inversed colors (white as background)
+        :param threshold: Use threshold
+        :param title: Show title
         :param kwargs: Optional keyword arguments
         """
-        assert len(im.shape) == 3
-        im_pred = self._model.predict_image(im)
+        im_pred = self._model.predict_image(im, threshold=threshold)
+
+        if inverse:
+            im = 1 - im
+            im_pred = 1 - im_pred
+            real = 1 - real
 
         kwargs['cfg_grid'] = False
-        fig = plt.figure(dpi=DEFAULT_PLOT_DPI)
+        fig = plt.figure(dpi=DEFAULT_PLOT_DPI, figsize=(9, 3))
         plt.style.use(DEFAULT_PLOT_STYLE)
         # fig.subplots_adjust(hspace=0.5)
         plt.axis('off')
         configure_figure(**kwargs)
 
         ax1: 'plt.Axes' = fig.add_subplot(131)
-        ax1.title.set_text('Input')
-        ax1.imshow(im)
+        if title:
+            ax1.title.set_text('Input')
+        ax1.imshow(im, cmap='gray')
         plt.xlabel('x $(px)$')
         plt.ylabel('y $(px)$')
         plt.axis('off')
         configure_figure(**kwargs)
 
         ax2 = fig.add_subplot(132)
-        ax2.title.set_text('Output')
-        ax2.imshow(im_pred)
+        if title:
+            ax2.title.set_text('Output')
+        ax2.imshow(im_pred, cmap='gray')
         plt.axis('off')
 
         ax2 = fig.add_subplot(133)
-        ax2.title.set_text('Real')
-        ax2.imshow(real)
+        if title:
+            ax2.title.set_text('Ground Thruth')
+        ax2.imshow(real, cmap='gray')
         plt.axis('off')
 
         configure_figure(**kwargs)

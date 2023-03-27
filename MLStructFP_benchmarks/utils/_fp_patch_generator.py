@@ -27,6 +27,7 @@ from warnings import warn
 
 if TYPE_CHECKING:
     from MLStructFP.db import Floor
+    from MLStructFP_benchmarks.ml.model.architectures import BaseFloorPhotoModel
 
 PatchRectType = List[Tuple[int, bool, float, float, float, float, int]]
 
@@ -273,7 +274,10 @@ class FloorPatchGenerator(object):
             patches: bool = True,
             patches_id: int = -1,
             rect: bool = True,
-            inverse: bool = True
+            rect_color: str = '#000000',
+            inverse: bool = True,
+            axis: bool = True,
+            model: Optional['BaseFloorPhotoModel'] = None
     ) -> None:
         """
         Plot the patches of a given floor.
@@ -283,16 +287,19 @@ class FloorPatchGenerator(object):
         :param patches: Add patches
         :param patches_id: If defined (>0), plot only the given patch ID
         :param rect: Plot rects
+        :param rect_color: Color of the rects
         :param inverse: If true, plot inversed colors (white as background)
+        :param axis: If false, disable axis
+        :param model: If provided, plot model output
         """
         assert 0 <= photo <= 1, 'Photo opacity must be between 0 and 1'
         ax: 'plt.Axes'
         fig, ax = plt.subplots(dpi=DEFAULT_PLOT_DPI)
         ax.set_aspect('equal')
-        if not inverse:
+        if not inverse or model:
             ax.set_facecolor('#000000')
         for r in floor.rect:
-            r.plot_matplotlib(ax, color='#000000' if not photo else '#ffffff')
+            r.plot_matplotlib(ax, color='#000000' if not photo else '#ffffff', alpha=0)
         if patches:
             for p in self._make_patches(floor, apply_delta=True):
                 n, origin, xmin, xmax, ymin, ymax, pid = p
@@ -306,18 +313,24 @@ class FloorPatchGenerator(object):
             for p in self._make_patches(floor, apply_delta=False):  # Add images
                 _, _, xmin, xmax, ymin, ymax, _ = p
                 pimg = self._process_photo(xmin, xmax, ymin, ymax, floor)
-                if inverse:
-                    if not self._bw:
-                        pimg = 255 - pimg
-                    else:
-                        pimg = 1 - pimg
-                plt.imshow(pimg, cmap='gray' if self._bw else None,
+                if model:
+                    pimg = 1 - model.predict_image(pimg, threshold=False)
+                else:
+                    if inverse:
+                        if not self._bw:
+                            pimg = 255 - pimg
+                        else:
+                            pimg = 1 - pimg
+                plt.imshow(pimg, cmap='binary' if model else ('gray' if self._bw else None),
                            extent=[xmin, xmax, ymin, ymax], origin='upper', alpha=photo)
             plt.xlim(lim_x)
             plt.ylim(lim_y)
         if rect:
             for r in floor.rect:
-                r.plot_matplotlib(ax, color='#000000' if (not (photo and not inverse)) else '#ff00ff')
-        plt.xlabel('x (m)')
-        plt.ylabel('y (m)')
+                r.plot_matplotlib(ax, color=rect_color)
+        if axis:
+            plt.xlabel('x (m)')
+            plt.ylabel('y (m)')
+        else:
+            plt.axis('off')
         configure_figure(cfg_grid=False)

@@ -114,19 +114,23 @@ class BaseFloorPhotoModel(GenericModel, ABC):
         super().reset_train()
         self._samples.clear()
 
-    def predict_image(self, img: 'np.ndarray') -> 'np.ndarray':
+    def predict_image(self, img: 'np.ndarray', threshold: bool = True) -> 'np.ndarray':
         """
         Predict image from common input.
 
         :param img: Image
+        :param threshold: Use threshold
         :return: Image
         """
         if len(img) == 0:
             return img
+        if len(img.shape) == 2:
+            img = img.reshape(self._image_shape)
         if len(img.shape) == 3:
             img = img.reshape((-1, img.shape[0], img.shape[1], img.shape[2]))
         pred_img = self.predict(img)
-        pred_img = np.where(pred_img > _IOU_THRESHOLD, 1, 0)
+        if threshold:
+            pred_img = np.where(pred_img > _IOU_THRESHOLD, 1, 0)
         if len(pred_img.shape) == 4 and pred_img.shape[0] == 1:
             pred_img = pred_img.reshape((pred_img.shape[1], pred_img.shape[2], pred_img.shape[3]))
         return pred_img
