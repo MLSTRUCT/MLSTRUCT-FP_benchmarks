@@ -281,7 +281,8 @@ class FloorPatchGenerator(object):
             rect_color: str = '#000000',
             inverse: bool = True,
             axis: bool = True,
-            model: Optional['BaseFloorPhotoModel'] = None
+            model: Optional['BaseFloorPhotoModel'] = None,
+            save: str = ''
     ) -> None:
         """
         Plot the patches of a given floor.
@@ -295,6 +296,7 @@ class FloorPatchGenerator(object):
         :param inverse: If true, plot inversed colors (white as background)
         :param axis: If false, disable axis
         :param model: If provided, plot model output
+        :param save: Save image
         """
         assert 0 <= photo <= 1, 'Photo opacity must be between 0 and 1'
         ax: 'plt.Axes'
@@ -340,6 +342,10 @@ class FloorPatchGenerator(object):
         configure_figure(cfg_grid=False)
         fig.patch.set_visible(False)
         fig.tight_layout(pad=0)
+        if save:
+            with open(save, 'wb') as outfile:
+                fig.canvas.print_png(outfile)
+            _crop_image(save)
 
     def plot_model(self, floor: 'Floor', model: 'BaseFloorPhotoModel', save: str, outline: bool = False) -> None:
         """
