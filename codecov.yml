@@ -1,0 +1,4 @@
+ignore:
+  - "dvec/*.py"
+  - "setup.py"
+  - "test/*.py"
