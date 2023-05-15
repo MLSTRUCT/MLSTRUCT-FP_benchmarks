@@ -83,6 +83,10 @@ class FloorPatchGenerator(object):
             delta_x = list(delta_x)
         if isinstance(delta_y, tuple):
             delta_y = list(delta_y)
+        if isinstance(delta_x, (int, float)):
+            delta_x = [delta_x]
+        if isinstance(delta_y, (int, float)):
+            delta_y = [delta_y]
         assert isinstance(delta_x, list), 'delta x must be an increasing list of float values between -0.5 to 0.5'
         assert isinstance(delta_y, list), 'delta y must be an increasing list of float values between -0.5 to 0.5'
         lx, ly = len(delta_x), len(delta_y)
