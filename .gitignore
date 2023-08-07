@@ -8,7 +8,7 @@ __pycache__/
 
 # Jupyter
 .ipynb_checkpoints/
-*.ipynb
+fp_pix2pix.ipynb
 
 # Dataset
 dataset/
