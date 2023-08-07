@@ -21,6 +21,19 @@ MLSTRUCT_FP-benchmarks
 
 Benchmarks of MLStructFP dataset.
 
+
+Description
+-----------
+
+This repo contains the segmentation and vectorization models for processing our
+`MLSTRUCT-FP dataset <https://github.com/MLSTRUCT/MLSTRUCT-FP>`_. See the following
+jupyter notebook files for more information:
+
+- `create_data <https://github.com/MLSTRUCT/MLSTRUCT-FP_benchmarks/blob/master/create_data.ipynb>`_: Creates dataset, assemble crops and export data session
+- `fp_unet <https://github.com/MLSTRUCT/MLSTRUCT-FP_benchmarks/blob/master/fp_unet.ipynb>`_: Creates U-Net model for wall segmentation
+- `vectorization <https://github.com/MLSTRUCT/MLSTRUCT-FP_benchmarks/blob/master/vectorization.ipynb>`_: Vectorizes a model using Egizarian et al. method
+
+
 Author
 ------
 
