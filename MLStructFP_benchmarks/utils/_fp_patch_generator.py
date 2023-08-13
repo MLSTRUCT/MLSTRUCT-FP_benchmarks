@@ -3,9 +3,9 @@ MLSTRUCTFP BENCHMARKS - UTILS - PATCH GENERATOR
 
 Generate image patches (binary, images) for a given set of floor plans.
 
-The patches are computed by setting a patch size, fixed for x/y axes, thus,
+The patches are computed by setting a patch size, fixed for x/y axes; thus,
 only square-images are valid. Then it proposes a set of patches, where for
-each one several images are obtained using a displacement which cannot exceed
+each one, several images are obtained using a displacement which cannot exceed
 50%. To save the results, the object stores the images in an efficient data
 storage object npz, which can be re-loaded to train the models.
 """
@@ -23,6 +23,7 @@ import math
 import numpy as np
 import skimage.color
 import skimage.io
+import time
 
 from PIL import Image
 from skimage.filters import sobel  # prewitt, scharr
@@ -351,7 +352,7 @@ class FloorPatchGenerator(object):
                 fig.canvas.print_png(outfile)
             _crop_image(save)
 
-    def plot_model(self, floor: 'Floor', model: 'BaseFloorPhotoModel', save: str, outline: bool = False) -> None:
+    def plot_model(self, floor: 'Floor', model: 'BaseFloorPhotoModel', save: str, outline: bool = False, verbose: bool = False) -> None:
         """
         Plot a given model into a rasterized image.
 
@@ -359,6 +360,7 @@ class FloorPatchGenerator(object):
         :param model: Model
         :param save: Save file
         :param outline: If true, apply outline algorithm
+        :param verbose: Verbose mode
         """
         ax: 'plt.Axes'
         fig, ax = plt.subplots(dpi=DEFAULT_PLOT_DPI)
@@ -368,12 +370,18 @@ class FloorPatchGenerator(object):
             r.plot_matplotlib(ax, alpha=0)
         lim_x = ax.get_xlim()
         lim_y = ax.get_ylim()
+
+        # Compute segmentation
+        t0 = time.time()
         for p in self._make_patches(floor, apply_delta=False):  # Add images
             _, _, xmin, xmax, ymin, ymax, _ = p
             plt.imshow(
                 1 - model.predict_image(self._process_photo(xmin, xmax, ymin, ymax, floor), threshold=False),
                 cmap='binary',
                 extent=[xmin, xmax, ymin, ymax], origin='upper')
+        if verbose:
+            print(f'Segmentation model computing time: {time.time() - t0:.2f}')
+
         plt.xlim(lim_x)
         plt.ylim(lim_y)
         ax.axis('off')
