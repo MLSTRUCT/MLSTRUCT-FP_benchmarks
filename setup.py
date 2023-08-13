@@ -20,6 +20,7 @@ requirements = [
     'matplotlib == 3.5.3',
     'MLStructFP == 0.3.2',
     'numpy == 1.18.5',
+    'Pillow == 9.5.0',
     'scikit-image == 0.18.1',
     'scikit-learn == 1.2.0'
 ]
