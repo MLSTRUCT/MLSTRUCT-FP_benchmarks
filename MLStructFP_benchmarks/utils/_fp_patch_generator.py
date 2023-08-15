@@ -209,7 +209,7 @@ class FloorPatchGenerator(object):
                 patch_p = patch_b
             sb, sp = np.sum(patch_b), np.sum(patch_p)
 
-            # Avoid save empty data
+            # Avoid saving empty data
             if sb == 0 and sp == 0:
                 ignore = True
 

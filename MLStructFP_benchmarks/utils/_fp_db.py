@@ -48,7 +48,8 @@ def _process_fp_dataset_mp(i: int, db: 'DbLoader', isz: int, psz: float, bw: boo
     floors = db.floors
     print(f'Processing floor {i + 1}/{len(floors)}')
     gen = FPDatasetGenerator(image_size=isz, patch_size=psz, bw=bw, delta_x=dx, delta_y=dy)
-    nb = gen.process_floor(floors[i], rotation_angles=r, verbose=False)
+    # noinspection PyProtectedMember
+    nb = gen._process_floor(floors[i], rotation_angles=r, verbose=False)
     gen.export(path=f'{p}{floors[i].id}')
     del gen
     return nb
@@ -73,8 +74,8 @@ class FPDatasetGenerator(object):
         """
         Constructor.
 
-        :param image_size: Image size in px. Must be a power of 2
-        :param patch_size: Dimension in (m) to crop the floor plan for x/y-axis
+        :param image_size: Image size in px. It must be a power of two
+        :param patch_size:  Dimensions in (m) to crop the floor plan for x/y-axis
         :param bw: Convert all images to black/white. Recommended as color does not contribute to the plan semantics
         :param delta_x: Delta crops/sliding-window for each patch (from -0.5,-0.5). If None, only iterate in y-axis
         :param delta_y: Delta crops for each patch (from -0.5,-0.5). If both are None, there is only 1 crop per patch
@@ -110,12 +111,24 @@ class FPDatasetGenerator(object):
         isz, psz = self._gen._image_size, self._gen._patch_size
         bw, dx, dy = self._gen._bw, self._gen._dx, self._gen._dy
 
+        # Check angle
+        assert isinstance(rotation_angles, (tuple, list)), 'Rotation angles must be a tuple or a list'
+        for angle in rotation_angles:
+            assert isinstance(angle, (int, float)), f'Each rotation angle must be numeric. Error at: {angle}'
+
+        # Check path
+        path_err = ('Path must contain a "/", examples "mypath/" or "mypath/example_". For both examples, '
+                    'dataset will be stored as "mypath/file1_binary.npz", or "mypath/example_file1_photo.npz" '
+                    'respectively')
+        assert '/' in path, path_err
+
         t = len(db.floors)
         print(f'Total floors to compute in parallel: {t}')
         print(f'Using up to {num_proc}/{cpu_count()} CPUs')
         print(f'Using export path: {path}, image size: {isz}px, patch size: {psz}m')
         print(f'Crop delta x: {dx}, delta y: {dy}, black/white: {bw}')
         print(f'Rotation angles: {rotation_angles}')
+
         pool = Pool(processes=num_proc)
         results = pool.map(functools.partial(
             _process_fp_dataset_mp, db=db, isz=isz, psz=psz, bw=bw,
@@ -127,13 +140,19 @@ class FPDatasetGenerator(object):
         for r in results:
             added += r[0]
             ignored += r[1]
+
         print(f'Pool finished, total time: {datetime.timedelta(seconds=int(total_time))}')
         print(f'Added patches: {added}, ignored: {ignored}. Ratio: {100 * added / (added + ignored):.1f}%')
         gc.collect()
         return results
 
     # noinspection PyProtectedMember
-    def process_floor(self, floor: 'Floor', rotation_angles: RotationAnglesType = DEFAULT_ROTATION_ANGLES, **kwargs) -> Tuple[int, int]:
+    def _process_floor(
+            self,
+            floor: 'Floor',
+            rotation_angles: RotationAnglesType = DEFAULT_ROTATION_ANGLES,
+            **kwargs
+    ) -> Tuple[int, int]:
         """
         Process a given floor.
 

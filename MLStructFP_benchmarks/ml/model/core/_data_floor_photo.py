@@ -84,8 +84,8 @@ class DataFloorPhoto(object):
     XXX_binary.npz
     XXX_photo.pnz
 
-    Where XXX is a unique ID which represents the image package (floors), binary is the black/white image that
-    represents wall rectangles, and photo is the processed patch from the real floor plan image.
+    Where XXX is a unique ID that represents the image package (floors), binary is the black/white image that
+    represents wall rectangles, and the photo is the processed patch from the real floor plan image.
     """
     _floor_photo_ch: int  # Number of photo channels
     _floor_photo_size: int  # Size of photo image
@@ -143,8 +143,8 @@ class DataFloorPhoto(object):
 
     def get_image_shape(self) -> Tuple[int, int, int]:
         """
-        Get image shape. As rect image channels are converted to target floor photo channels
-        this dimension and number of channels with be equal in rect/floor photo data.
+        Get image shape. As rect image channels are converted to target floor photo channels,
+        this dimension and number of channels must be equal in rect/floor photo data.
 
         :return: Tuple
         """
@@ -254,7 +254,7 @@ class DataFloorPhoto(object):
         """
         Assemble train/test data.
 
-        :param split: Split images in train/test
+        :param split: Split percentage images in train/test
         :return: Self
         """
         assert 0 < split < 1, 'Split must be between 0 and 1'
@@ -370,7 +370,7 @@ class DataFloorPhoto(object):
         with open(filename, 'r') as fp:
             data = json.load(fp)
 
-            # Check version of the export is the same
+            # Check if the version of the export is the same
             assert data['version'] == _SESSION_EXPORT_VERSION, \
                 'Outdated session export version, needed {0}, current {1}'.format(_SESSION_EXPORT_VERSION, data['version'])
 
