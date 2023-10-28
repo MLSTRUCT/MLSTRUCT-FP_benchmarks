@@ -30,6 +30,24 @@ jupyter notebook files (in order) for more information and quick start:
 - `vectorization <https://github.com/MLSTRUCT/MLSTRUCT-FP_benchmarks/blob/master/vectorization.ipynb>`_: Vectorizes a model using Egiazarian et al. method
 
 
+Citing
+------
+
+.. code-block:: tex
+    
+    @article{Pizarro2023,
+        title = {Large-scale multi-unit floor plan dataset for architectural plan analysis and recognition},
+        journal = {Automation in Construction},
+        volume = {156},
+        pages = {105132},
+        year = {2023},
+        issn = {0926-5805},
+        doi = {https://doi.org/10.1016/j.autcon.2023.105132},
+        url = {https://www.sciencedirect.com/science/article/pii/S0926580523003928},
+        author = {Pablo N. Pizarro and Nancy Hitschfeld and Ivan Sipiran}
+    }
+
+
 Author
 ------
 
