@@ -254,5 +254,6 @@ class TQDMProgressBar(Callback):
             'show_overall_progress': self.show_overall_progress
         }
 
+        # noinspection PyUnresolvedReferences
         base_config = super().get_config()
         return {**base_config, **config}

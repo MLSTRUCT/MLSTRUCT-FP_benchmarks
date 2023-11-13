@@ -70,7 +70,7 @@ def fit_loop(
             Ignored with the default value of `None`.
         validation_freq: Only relevant if validation data is provided. Integer
             or list/tuple/set. If an integer, specifies how many training
-            epochs to run before a new validation run is performed, e.g.
+            epochs to run before a new validation run is performed, e.g.,
             validation_freq=2` runs validation every 2 epochs. If a list,
             tuple, or set, specifies the epochs on which to run validation,
             e.g. `validation_freq=[1, 2, 10]` runs validation at the end

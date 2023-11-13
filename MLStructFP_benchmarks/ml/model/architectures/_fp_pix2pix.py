@@ -24,7 +24,7 @@ import numpy as np
 import os
 
 if TYPE_CHECKING:
-    from ml.model.core import DataFloorPhoto
+    from MLStructFP_benchmarks.ml.model.core import DataFloorPhoto
 
 
 class Pix2PixFloorPhotoModel(BaseFloorPhotoModel):

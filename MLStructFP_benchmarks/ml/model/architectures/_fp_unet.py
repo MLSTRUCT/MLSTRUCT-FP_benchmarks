@@ -19,7 +19,7 @@ import datetime
 import numpy as np
 
 if TYPE_CHECKING:
-    from ml.model.core import DataFloorPhoto
+    from MLStructFP_benchmarks.ml.model.core import DataFloorPhoto
 
 
 class UNETFloorPhotoModel(BaseFloorPhotoModel):
@@ -47,7 +47,7 @@ class UNETFloorPhotoModel(BaseFloorPhotoModel):
         :param kwargs: Optional keyword arguments
         """
 
-        # Create base model
+        # Create the base model
         BaseFloorPhotoModel.__init__(self, data, name, image_shape, **kwargs)
         self._output_layers = ['out']
 
@@ -129,7 +129,7 @@ class UNETFloorPhotoModel(BaseFloorPhotoModel):
         assert isinstance(init_part, int)
         print_enabled = self._print_enabled
 
-        # The idea is to train using each part of the data, metrics will not be evaluated
+        # The idea is to train using each part of the data; metrics will not be evaluated
         total_parts: int = self._data.total_parts
         assert 1 <= init_part <= total_parts, \
             f'Initial part <{init_part}> exceeds total parts <{total_parts}>'

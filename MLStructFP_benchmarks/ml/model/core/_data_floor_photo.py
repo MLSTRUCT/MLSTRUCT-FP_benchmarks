@@ -172,7 +172,7 @@ class DataFloorPhoto(object):
         """
         Load part and save into memory.
 
-        :param part: Num part. If split, 1 returns train, else, return test
+        :param part: Num part. If split, one returns train, else, return test
         :param shuffle: Shuffle data order
         :param ignore_split: If true, ignores train/test split
         :return: Binary/Photo data. Images are within (0, 1) range
@@ -206,7 +206,7 @@ class DataFloorPhoto(object):
             img_b = np.zeros(new_shape, dtype=_DATA_DTYPE)
             img_p = np.zeros(new_shape, dtype=_DATA_DTYPE)
 
-            j = 0  # Index of add
+            j = 0  # Index to add
             k = 0  # Number of processed parts
             for i in self._split[part - 1]:  # Iterate train parts
                 f = self._get_file(i)

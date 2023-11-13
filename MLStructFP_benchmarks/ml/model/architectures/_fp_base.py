@@ -26,7 +26,7 @@ import time
 import tensorflow as tf
 
 if TYPE_CHECKING:
-    from ml.model.core import DataFloorPhoto
+    from MLStructFP_benchmarks.ml.model.core import DataFloorPhoto
 
 _IOU_THRESHOLD = 0.3
 

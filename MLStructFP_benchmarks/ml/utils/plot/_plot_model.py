@@ -195,7 +195,8 @@ def compare_metrics_from_csv(
 def _data_mark_on_plot(
         x: Union['np.ndarray', List[Union[int, float]]],
         y: Union['np.ndarray', List[Union[int, float]]],
-        mode: str, plot: 'plt.Line2D',
+        mode: str,
+        plot: Any,
         format_name: str,
         ylims: List[Union[int, float]]
 ) -> None:
