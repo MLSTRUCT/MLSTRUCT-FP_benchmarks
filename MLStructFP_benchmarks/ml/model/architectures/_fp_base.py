@@ -142,8 +142,7 @@ class BaseFloorPhotoModel(GenericModel, ABC):
         # Save samples dict
         if len(self._samples.keys()) > 0:
             if self._get_session_data('train_samples') is None:
-                self._register_session_data('train_samples', _PATH_SESSION +
-                                            os.path.sep + f'samples_{random.getrandbits(64)}.npz')
+                self._register_session_data('train_samples', os.path.join(_PATH_SESSION, f'samples_{random.getrandbits(64)}.npz'))
             samples_f = self._get_session_data('train_samples')
             np.savez_compressed(samples_f, data=self._samples)
 
