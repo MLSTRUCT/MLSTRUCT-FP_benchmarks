@@ -15,7 +15,7 @@ __all__ = ['FloorPatchGenerator']
 from MLStructFP.db.image import RectBinaryImage, RectFloorPhoto
 # noinspection PyProtectedMember
 from MLStructFP.db.image._rect_photo import RectFloorShapeException
-from MLStructFP.utils import DEFAULT_PLOT_DPI, configure_figure
+from MLStructFP.utils import make_dirs, DEFAULT_PLOT_DPI, configure_figure
 
 import gc
 import matplotlib.pyplot as plt
