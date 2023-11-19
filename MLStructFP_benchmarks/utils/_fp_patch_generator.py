@@ -69,7 +69,7 @@ class FloorPatchGenerator(object):
 
         :param image_size: Image size in px. Must be a power of 2
         :param patch_size: Dimension in (m) to crop the floor plan for x/y-axis
-        :param bw: Convert all images to black/white. Recomended as color does not contribute to the plan semantics
+        :param bw: Convert all images to black/white. Recommended as color does not contribute to the plan semantics
         :param delta_x: Delta crops/sliding-window for each patch (from -0.5,-0.5). If None, only iterate in y-axis
         :param delta_y: Delta crops for each patch (from -0.5,-0.5). If both are None, there is only 1 crop per patch
         :param min_binary_area: Min area for binary image allowed (0-1). If lower, ignores the patch
