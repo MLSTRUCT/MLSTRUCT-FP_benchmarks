@@ -12,7 +12,7 @@ __email__ = 'pablo@ppizarror.com'
 __version__ = '1.0.0'
 
 # URL
-__url__ = 'https://github.com/MLSTRUCT/MLSTRUCT_FP-benchmarks'
-__url_bug_tracker__ = 'https://github.com/MLSTRUCT/MLSTRUCT_FP-benchmarks/issues'
-__url_documentation__ = 'https://github.com/MLSTRUCT/MLSTRUCT_FP-benchmarks'
-__url_source_code__ = 'https://github.com/MLSTRUCT/MLSTRUCT_FP-benchmarks'
+__url__ = 'https://github.com/MLSTRUCT/MLSTRUCT-FP_benchmarks'
+__url_bug_tracker__ = 'https://github.com/MLSTRUCT/MLSTRUCT-FP_benchmarks/issues'
+__url_documentation__ = 'https://github.com/MLSTRUCT/MLSTRUCT-FP_benchmarks'
+__url_source_code__ = 'https://github.com/MLSTRUCT/MLSTRUCT-FP_benchmarks'
