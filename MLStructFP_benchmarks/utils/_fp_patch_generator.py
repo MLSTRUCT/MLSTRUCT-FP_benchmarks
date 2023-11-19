@@ -348,7 +348,7 @@ class FloorPatchGenerator(object):
         fig.patch.set_visible(False)
         fig.tight_layout(pad=0)
         if save:
-            with open(save, 'wb') as outfile:
+            with open(make_dirs(save), 'wb') as outfile:
                 fig.canvas.print_png(outfile)
             _crop_image(save)
 
@@ -387,7 +387,7 @@ class FloorPatchGenerator(object):
         ax.axis('off')
         fig.patch.set_visible(False)
         fig.tight_layout(pad=0)
-        with open(save, 'wb') as outfile:
+        with open(make_dirs(save), 'wb') as outfile:
             fig.canvas.print_png(outfile)
         plt.close()
         _crop_image(save)
