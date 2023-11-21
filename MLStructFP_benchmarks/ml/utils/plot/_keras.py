@@ -40,7 +40,7 @@ def _check_pydot() -> None:
         pydot.Dot.create(pydot.Dot())
     except OSError:
         raise OSError(
-            '`pydot` failed to call GraphViz.'
+            '`pydot` failed to call GraphViz. '
             'Please install GraphViz (https://www.graphviz.org/) '
             'and ensure that its executables are in the $PATH.')
 
