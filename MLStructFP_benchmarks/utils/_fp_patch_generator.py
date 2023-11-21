@@ -418,6 +418,9 @@ def _crop_image(image_name: str) -> None:
     coords = np.argwhere(mask)
     x0, y0, z0 = coords.min(axis=0)
     x1, y1, z1 = coords.max(axis=0) + 1
-    cropped_box = np_array[x0:x1, y0:y1, z0:z1]
+    nchannels = z1 - z0
+    if nchannels != 4:
+        raise ValueError(f'Broken image. Requieres 4 channels, but {nchannels} given')
+    cropped_box: 'np.ndarray' = np_array[x0:x1, y0:y1, z0:z1]
     pil_image = Image.fromarray(cropped_box, 'RGBA')
     pil_image.save(image_name)
