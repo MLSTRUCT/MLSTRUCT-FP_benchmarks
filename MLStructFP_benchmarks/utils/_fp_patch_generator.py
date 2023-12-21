@@ -216,11 +216,9 @@ class FloorPatchGenerator(object):
             # Normalize pixel sum
             total_area = (np.shape(patch_b)[0] ** 2)
             sb /= total_area
-            if self._bw:
-                sp /= total_area
 
             # Ignore if area requirement not fulfilled
-            if self._min_binary_area > 0 and sb / sb <= self._min_binary_area:
+            if self._min_binary_area > 0 and sb <= self._min_binary_area:
                 ignore = True
             if self._bw and sb < 0.001:
                 ignore = True
