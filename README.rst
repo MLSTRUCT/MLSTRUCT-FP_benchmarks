@@ -51,4 +51,4 @@ Citing
 Author
 ------
 
-`Pablo Pizarro R. <https://ppizarror.com>`_ | 2023
+`Pablo Pizarro R. <https://ppizarror.com>`_ | 2023 - 2024
