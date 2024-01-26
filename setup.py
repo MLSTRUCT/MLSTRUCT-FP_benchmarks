@@ -15,20 +15,20 @@ with open('README.rst') as f:
 
 # Load requirements
 requirements = [
-    'Keras == 2.3.1',
-    'keras_tqdm == 2.0.1',
-    'matplotlib == 3.5.3',
-    'MLStructFP == 0.4.0',
-    'numpy == 1.18.5',
-    'Pillow == 9.5.0',
-    'scikit-image == 0.18.1',
-    'scikit-learn == 1.2.0'
+    'Keras <= 2.3.1',
+    'keras_tqdm <= 2.0.1',
+    'matplotlib <= 3.5.3',
+    'MLStructFP >= 0.4.3',
+    'numpy <= 1.18.5',
+    'Pillow >= 10.2.0',
+    'scikit-image <= 0.18.1',
+    'scikit-learn >= 1.3.2'
 ]
 
 if os.environ.get('GITHUB') != 'true':
     for r in [
         'tensorboard == 2.2.2',
-        'tensorflow-gpu == 2.2.2'  # Check https://www.tensorflow.org/install/gpu. Needs CUDA 10.1 + cuDNN 7.6.5
+        'tensorflow-gpu == 2.2.2'  # Needs CUDA 10.1 + cuDNN 7.6.5
     ]:
         requirements.append(r)
 
