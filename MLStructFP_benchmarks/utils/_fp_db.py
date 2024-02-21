@@ -57,8 +57,7 @@ def _process_fp_dataset_mp(i: int, db: 'DbLoader', isz: int, psz: float, bw: boo
 
 class FPDatasetGenerator(object):
     """
-    Generates a dataset by creatig floor plan patches by introducing several
-    mutations.
+    Generates a dataset floor plan patches by introducing several mutations.
     """
     _gen: 'FloorPatchGenerator'
     _processed_floor: List[int]
@@ -69,7 +68,8 @@ class FPDatasetGenerator(object):
             patch_size: float,
             bw: bool = True,
             delta_x: DeltaPatchType = (-0.25, 0, 0.25),
-            delta_y: DeltaPatchType = (-0.25, 0, 0.25)
+            delta_y: DeltaPatchType = (-0.25, 0, 0.25),
+            min_binary_area: float = 0
     ) -> None:
         """
         Constructor.
@@ -79,13 +79,15 @@ class FPDatasetGenerator(object):
         :param bw: Convert all images to black/white. Recommended as color does not contribute to the plan semantics
         :param delta_x: Delta crops/sliding-window for each patch (from -0.5,-0.5). If None, only iterate in y-axis
         :param delta_y: Delta crops for each patch (from -0.5,-0.5). If both are None, there is only one crop per patch
+        :param min_binary_area: Min area for binary image allowed (0-1). If lower, ignores the patch
         """
         self._gen = FloorPatchGenerator(
             image_size=image_size,
             patch_size=patch_size,
             bw=bw,
             delta_x=delta_x,
-            delta_y=delta_y
+            delta_y=delta_y,
+            min_binary_area=min_binary_area
         )
         self._processed_floor = []
 

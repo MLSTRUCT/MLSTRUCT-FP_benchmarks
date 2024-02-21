@@ -91,7 +91,7 @@ class FloorPatchGenerator(object):
         assert isinstance(delta_x, list), 'delta x must be an increasing list of float values between -0.5 to 0.5'
         assert isinstance(delta_y, list), 'delta y must be an increasing list of float values between -0.5 to 0.5'
         lx, ly = len(delta_x), len(delta_y)
-        assert lx * ly != 0, 'deltas for x and y axis must have at least 1 item'
+        assert lx * ly != 0, 'deltas for x and y-axis must have at least 1 item'
         if 0 not in delta_x:
             warn('Delta x must contain 0, which was added automatically')
             delta_x.append(0)
