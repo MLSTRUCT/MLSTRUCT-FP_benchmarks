@@ -181,7 +181,8 @@ class FPDatasetGenerator(object):
             try:
                 self._gen.process(floor)
             except RectFloorPhotoFileLoadException:
-                print(f'\tSkipping floor ID {floor.id} as its image "{floor.image_path}" could not be loaded')
+                print(f'[ERROR] Skipping floor ID <{floor.id}> as its image "{floor.image_path}" could not be loaded')
+                continue
             added += self._gen._test_last_added
             ignored += len(self._gen._test_ignored_patches)
             if verbose:
