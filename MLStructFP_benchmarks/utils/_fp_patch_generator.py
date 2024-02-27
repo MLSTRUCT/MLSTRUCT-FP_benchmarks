@@ -14,7 +14,7 @@ __all__ = ['FloorPatchGenerator']
 
 from MLStructFP.db.image import RectBinaryImage, RectFloorPhoto
 # noinspection PyProtectedMember
-from MLStructFP.db.image._rect_photo import RectFloorShapeException
+from MLStructFP.db.image._rect_photo import RectFloorPhotoShapeException
 from MLStructFP.utils import make_dirs, DEFAULT_PLOT_DPI, configure_figure
 
 import gc
@@ -204,7 +204,7 @@ class FloorPatchGenerator(object):
             patch_b = self._gen_binary.make_region(xmin, xmax, ymin, ymax, floor)[1]
             try:
                 patch_p = self._process_photo(xmin, xmax, ymin, ymax, floor)
-            except RectFloorShapeException:  # Try to crop a larger plan
+            except RectFloorPhotoShapeException:  # Try to crop a larger plan
                 ignore = True
                 patch_p = patch_b
             sb, sp = np.sum(patch_b), np.sum(patch_p)

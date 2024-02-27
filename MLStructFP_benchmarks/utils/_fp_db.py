@@ -11,6 +11,9 @@ from MLStructFP.db import DbLoader
 from MLStructFP.utils import make_dirs
 from MLStructFP_benchmarks.utils._fp_patch_generator import FloorPatchGenerator
 
+# noinspection PyProtectedMember
+from MLStructFP.db.image._rect_photo import RectFloorPhotoFileLoadException
+
 import datetime
 import functools
 import gc
@@ -175,7 +178,10 @@ class FPDatasetGenerator(object):
             if verbose:
                 print(f'\tGenerating patches with angle={angle} ... ', end='')
             floor.mutate(angle)
-            self._gen.process(floor)
+            try:
+                self._gen.process(floor)
+            except RectFloorPhotoFileLoadException:
+                print(f'\tSkipping floor ID {floor.id} as its image "{floor.image_path}" could not be loaded')
             added += self._gen._test_last_added
             ignored += len(self._gen._test_ignored_patches)
             if verbose:
