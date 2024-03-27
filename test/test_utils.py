@@ -1,7 +1,7 @@
 """
 MLSTRUCTFP BENCHMARKS - TEST - UTILS
 
-Test utils.
+Test general utils.
 """
 
 import os
