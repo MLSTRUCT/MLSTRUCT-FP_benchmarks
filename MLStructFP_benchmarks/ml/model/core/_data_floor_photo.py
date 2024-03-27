@@ -189,7 +189,7 @@ class DataFloorPhoto(object):
             # First, get all images size and create a numpy zero object
             imgs = 0
             sizes: Dict[int, int] = {}  # Size for each part
-            for i in self._split[part - 1]:  # Iterate train parts
+            for i in self._split[part - 1]:  # Iterate loaded parts
                 i_info = list(_npz_headers(self._get_file(i)[0]))[0]  # ('data', (N, SIZE, SIZE), dtype('DTYPE'))
                 i_shp = i_info[1]
                 assert i_shp[1] == i_shp[2] == self._floor_photo_size, \
