@@ -187,7 +187,7 @@ class DataFloorPhoto(object):
         else:
             assert part in (1, 2), '1 returns train, 2 test. No other part value allowed'
             # First, get all images size and create a numpy zero object
-            imgs = 0
+            imgs = 0  # Total images loaded so far
             sizes: Dict[int, int] = {}  # Size for each part
             for i in self._split[part - 1]:  # Iterate loaded parts
                 i_info = list(_npz_headers(self._get_file(i)[0]))[0]  # ('data', (N, SIZE, SIZE), dtype('DTYPE'))
@@ -208,7 +208,7 @@ class DataFloorPhoto(object):
 
             j = 0  # Index to add
             k = 0  # Number of processed parts
-            for i in self._split[part - 1]:  # Iterate train parts
+            for i in self._split[part - 1]:  # Iterate loaded parts
                 f = self._get_file(i)
                 img_b[j:j + sizes[i]] = np.load(f[0])['data']  # Binary
                 img_p[j:j + sizes[i]] = np.load(f[1])['data']  # Photo
