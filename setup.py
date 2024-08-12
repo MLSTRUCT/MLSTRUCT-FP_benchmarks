@@ -21,6 +21,7 @@ requirements = [
     'MLStructFP >= 0.6.0',
     'numpy <= 1.18.5',
     'Pillow >= 10.4.0',
+    'plotly >= 5.23.0',
     'scikit-image <= 0.18.1',
     'scikit-learn >= 1.3.2'
 ]

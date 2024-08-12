@@ -1,6 +1,6 @@
 
 ======================
-MLSTRUCT_FP-benchmarks
+MLSTRUCT-FP_benchmarks
 ======================
 
 .. image:: https://img.shields.io/github/actions/workflow/status/MLSTRUCT/MLSTRUCT-FP_benchmarks/ci.yml?branch=master
@@ -15,7 +15,7 @@ MLSTRUCT_FP-benchmarks
     :target: https://opensource.org/licenses/MIT
     :alt: License MIT
 
-Benchmarks of MLStructFP dataset.
+Benchmarks of `MLSTRUCT-FP <https://github.com/MLSTRUCT/MLSTRUCT-FP>`_ dataset.
 
 
 Description
@@ -29,6 +29,8 @@ jupyter notebook files (in order) for more information and a quick start:
 - `fp_unet <https://github.com/MLSTRUCT/MLSTRUCT-FP_benchmarks/blob/master/fp_unet.ipynb>`_: Creates U-Net model for wall segmentation
 - `vectorization <https://github.com/MLSTRUCT/MLSTRUCT-FP_benchmarks/blob/master/vectorization.ipynb>`_: Vectorizes a model using Egiazarian et al. method
 
+The weights for the best model (no_rot_256_50) can be downloaded at `this link <https://drive.google.com/file/d/15ufkjoWOFyT0Cm-MEc9zQJCDJIooOgh7/view?usp=sharing>`_.
+
 
 Citing
 ------
@@ -36,15 +38,16 @@ Citing
 .. code-block:: tex
     
     @article{Pizarro2023,
-        title = {Large-scale multi-unit floor plan dataset for architectural plan analysis and recognition},
-        journal = {Automation in Construction},
-        volume = {156},
-        pages = {105132},
-        year = {2023},
-        issn = {0926-5805},
-        doi = {https://doi.org/10.1016/j.autcon.2023.105132},
-        url = {https://www.sciencedirect.com/science/article/pii/S0926580523003928},
-        author = {Pablo N. Pizarro and Nancy Hitschfeld and Ivan Sipiran}
+      title = {Large-scale multi-unit floor plan dataset for architectural plan analysis and
+               recognition},
+      journal = {Automation in Construction},
+      volume = {156},
+      pages = {105132},
+      year = {2023},
+      issn = {0926-5805},
+      doi = {https://doi.org/10.1016/j.autcon.2023.105132},
+      url = {https://www.sciencedirect.com/science/article/pii/S0926580523003928},
+      author = {Pablo N. Pizarro and Nancy Hitschfeld and Ivan Sipiran}
     }
 
 
