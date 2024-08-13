@@ -31,7 +31,7 @@ class UtilsTest(unittest.TestCase):
         # Test plots
         patchgen.plot_patches(floor)
         patchgen.plot_patch(0)
-        self.assertEqual(len(patchgen._patch_photo), 22)
+        self.assertEqual(len(patchgen._gen_photo.patches), 22)
 
     def test_fp_db_generator(self) -> None:
         """

@@ -215,7 +215,7 @@ class FPDatasetGenerator(object):
                 return
             np.savez_compressed(fn, data=np.array(image_list, dtype='uint8'))  # .npz
 
-        save_list(f'{path}_binary', self._gen._patch_binary)
-        save_list(f'{path}_photo', self._gen._patch_photo)
+        save_list(f'{path}_binary', self._gen._gen_binary.patches)
+        save_list(f'{path}_photo', self._gen._gen_photo.patches)
         self._processed_floor.clear()
         self._gen.clear()

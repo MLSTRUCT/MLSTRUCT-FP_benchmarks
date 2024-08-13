@@ -49,8 +49,6 @@ class FloorPatchGenerator(object):
     _image_size: int
     _img_size: int
     _min_binary_area: float
-    _patch_binary: List['np.ndarray']
-    _patch_photo: List['np.ndarray']
     _patch_size: float
     _test_ignored_patches: List[int]
     _test_last_added: int
@@ -118,8 +116,6 @@ class FloorPatchGenerator(object):
         self._gen_binary = RectBinaryImage(image_size_px=image_size)
         self._gen_photo = RectFloorPhoto(image_size_px=image_size, empty_color=0)
         self._min_binary_area = min_binary_area
-        self._patch_binary = []
-        self._patch_photo = []
         self._patch_size = patch_size
         self._test_ignored_patches = []
         self._test_last_added = 0
@@ -181,8 +177,8 @@ class FloorPatchGenerator(object):
 
         :return: Self
         """
-        self._patch_binary.clear()
-        self._patch_photo.clear()
+        self._gen_binary.patches.clear()
+        self._gen_photo.patches.clear()
         self._test_ignored_patches.clear()
         self._test_last_added = 0
         gc.collect()
@@ -227,14 +223,13 @@ class FloorPatchGenerator(object):
                 self._test_ignored_patches.append(n)
                 continue
 
-            self._patch_binary.append(patch_b)
-            self._patch_photo.append(patch_p)
+            self._gen_binary.patches.append(patch_b)
+            self._gen_photo.patches.append(patch_p)
             added += 1
 
         self._test_last_added = added
         self._gen_binary.close()
         self._gen_photo.close()
-        self._gen_binary.restore_plot()
 
         return self
 
@@ -246,8 +241,8 @@ class FloorPatchGenerator(object):
         :param inverse: If true, plot inversed colors (white as background)
         """
         plt.figure(dpi=DEFAULT_PLOT_DPI)
-        photo = self._patch_photo[idx]
-        binary = self._patch_binary[idx]
+        photo = self._gen_photo.patches[idx]
+        binary = self._gen_binary.patches[idx]
         if inverse:
             if not self._bw:
                 photo = 255 - photo
@@ -265,7 +260,7 @@ class FloorPatchGenerator(object):
         :param inverse: If true, plot inversed colors (white as background)
         """
         plt.figure(dpi=DEFAULT_PLOT_DPI)
-        photo = self._patch_photo[idx]
+        photo = self._gen_photo.patches[idx]
         if inverse:
             if not self._bw:
                 photo = 255 - photo
