@@ -47,7 +47,6 @@ class FloorPatchGenerator(object):
     _gen_binary: 'RectBinaryImage'
     _gen_photo: 'RectFloorPhoto'
     _image_size: int
-    _img_size: int
     _min_binary_area: float
     _patch_size: float
     _test_ignored_patches: List[int]
