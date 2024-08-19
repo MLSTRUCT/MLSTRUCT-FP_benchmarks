@@ -183,11 +183,12 @@ class FloorPatchGenerator(object):
         gc.collect()
         return self
 
-    def process(self, floor: 'Floor') -> 'FloorPatchGenerator':
+    def process(self, floor: 'Floor', restore_plot: bool = True) -> 'FloorPatchGenerator':
         """
         Process a given floor.
 
         :param floor: Floor to process
+        :param restore_plot: Restores plot backend
         :return: Self
         """
         self._test_ignored_patches.clear()
@@ -227,7 +228,7 @@ class FloorPatchGenerator(object):
             added += 1
 
         self._test_last_added = added
-        self._gen_binary.close()
+        self._gen_binary.close(restore_plot=restore_plot)
         self._gen_photo.close()
 
         return self
