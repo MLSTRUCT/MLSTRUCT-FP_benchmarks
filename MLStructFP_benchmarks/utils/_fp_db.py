@@ -1,5 +1,5 @@
 """
-MLSTRUCTFP BENCHMARKS - UTILS - DATASET GENERATOR
+MLSTRUCT-FP BENCHMARKS - UTILS - DATASET GENERATOR
 
 Generates a standard dataset by applying mutators to a given floor,
 the results can be stored to .npz compressed files, or saved to a file.

@@ -1,5 +1,5 @@
 """
-MLSTRUCTFP BENCHMARKS
+MLSTRUCT-FP BENCHMARKS
 
 Machine learning structural floor plan dataset (benchmarks).
 """

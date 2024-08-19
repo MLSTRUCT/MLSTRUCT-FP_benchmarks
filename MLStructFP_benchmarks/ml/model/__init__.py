@@ -1,5 +1,5 @@
 """
-MLSTRUCTFP BENCHMARKS - ML - MODEL
+MLSTRUCT-FP BENCHMARKS - ML - MODEL
 
 Model architectures.
 """

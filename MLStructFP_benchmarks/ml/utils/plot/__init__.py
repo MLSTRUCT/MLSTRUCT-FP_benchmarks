@@ -1,5 +1,5 @@
 """
-MLSTRUCTFP BENCHMARKS - ML - MODEL - UTILS - PLOT
+MLSTRUCT-FP BENCHMARKS - ML - MODEL - UTILS - PLOT
 
 Plotting methods and classes.
 """

@@ -1,5 +1,5 @@
 """
-MLSTRUCTFP BENCHMARKS - TEST - ML
+MLSTRUCT-FP BENCHMARKS - TEST - ML
 
 Test data floor photo load.
 """

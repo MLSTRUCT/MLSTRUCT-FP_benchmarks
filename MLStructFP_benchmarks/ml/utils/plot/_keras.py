@@ -1,5 +1,5 @@
 """
-MLSTRUCTFP BENCHMARKS - ML - MODEL - UTILS - PLOT - KERAS
+MLSTRUCT-FP BENCHMARKS - ML - MODEL - UTILS - PLOT - KERAS
 
 Keras utils for plotting.
 """

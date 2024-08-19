@@ -1,5 +1,5 @@
 """
-MLSTRUCTFP BENCHMARKS - UTILS - PATCH GENERATOR
+MLSTRUCT-FP BENCHMARKS - UTILS - PATCH GENERATOR
 
 Generate image patches (binary, images) for a given set of floor plans.
 

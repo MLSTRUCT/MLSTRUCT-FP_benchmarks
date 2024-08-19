@@ -1,5 +1,5 @@
 """
-MLSTRUCTFP BENCHMARKS - ML - UTILS
+MLSTRUCT-FP BENCHMARKS - ML - UTILS
 
 Utility functions.
 """

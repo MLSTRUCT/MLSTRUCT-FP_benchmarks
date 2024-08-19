@@ -1,5 +1,5 @@
 """
-MLSTRUCTFP BENCHMARKS - ML - MODEL - UTILS - CALLBACKS - KERAS
+MLSTRUCT-FP BENCHMARKS - ML - MODEL - UTILS - CALLBACKS - KERAS
 
 Overwrites keras default callbacks.
 """

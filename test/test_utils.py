@@ -1,5 +1,5 @@
 """
-MLSTRUCTFP BENCHMARKS - TEST - UTILS
+MLSTRUCT-FP BENCHMARKS - TEST - UTILS
 
 Test general utils.
 """
