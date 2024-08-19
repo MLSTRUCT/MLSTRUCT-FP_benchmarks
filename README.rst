@@ -23,13 +23,14 @@ Description
 
 This repo contains the segmentation and vectorization models for processing our
 `MLSTRUCT-FP dataset <https://github.com/MLSTRUCT/MLSTRUCT-FP>`_. See the following
-jupyter notebook files (in order) for more information and a quick start:
+jupyter notebook files for more information and a quick start (in order):
 
 - `create_data <https://github.com/MLSTRUCT/MLSTRUCT-FP_benchmarks/blob/master/create_data.ipynb>`_: Creates a dataset, assembles crops, and export data session
 - `fp_unet <https://github.com/MLSTRUCT/MLSTRUCT-FP_benchmarks/blob/master/fp_unet.ipynb>`_: Creates U-Net model for wall segmentation
 - `vectorization <https://github.com/MLSTRUCT/MLSTRUCT-FP_benchmarks/blob/master/vectorization.ipynb>`_: Vectorizes a model using Egiazarian et al. method
 
-The weights for the best model (no_rot_256_50) can be downloaded at `this link <https://drive.google.com/file/d/15ufkjoWOFyT0Cm-MEc9zQJCDJIooOgh7/view?usp=sharing>`_.
+The weights for the best model (no_rot_256_50) can be downloaded at
+`this link <https://drive.google.com/file/d/15ufkjoWOFyT0Cm-MEc9zQJCDJIooOgh7/view?usp=sharing>`_.
 
 
 Citing
