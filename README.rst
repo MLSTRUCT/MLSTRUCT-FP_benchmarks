@@ -30,7 +30,10 @@ jupyter notebook files for more information and a quick start (in order):
 - `vectorization <https://github.com/MLSTRUCT/MLSTRUCT-FP_benchmarks/blob/master/vectorization.ipynb>`_: Vectorizes a model using Egiazarian et al. method
 
 The weights for the best model (no_rot_256_50) can be downloaded at
-`this link <https://drive.google.com/file/d/15ufkjoWOFyT0Cm-MEc9zQJCDJIooOgh7/view?usp=sharing>`_.
+`this link <https://drive.google.com/file/d/15ufkjoWOFyT0Cm-MEc9zQJCDJIooOgh7/view?usp=sharing>`_. For the vectorization model, follow the following links
+to download the weights for `model_curves <https://drive.google.com/file/d/18jN37pMvEg9S05sLdAznQC5UZDsLz-za/view?usp=sharing>`_ and
+`model_lines <https://drive.google.com/file/d/1Zf085V3783zbrLuTXZxizc7utszI9BZR/view?usp=sharing>`_; check the vectorization
+`original repo <https://github.com/Vahe1994/Deep-Vectorization-of-Technical-Drawings>`_ for more details.
 
 
 Citing
