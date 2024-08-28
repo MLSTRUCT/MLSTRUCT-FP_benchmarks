@@ -170,7 +170,7 @@ class FPDatasetGenerator(object):
         :param floor: Floor to process
         :param kwargs: Keyword optional arguments
         :param rotation_angles: Which rotation angles are applied to the floor plan
-        :returns: Number of (added, ignored) patches
+        :return: Number of (added, ignored) patches
         """
         if floor.id in self._processed_floor:
             raise ValueError(f'Floor ID {floor.id} already processed')

@@ -100,7 +100,7 @@ class DegradationGenerator:
 
         :param image: input image
         :type image: numpy.ndarray of shape [h, w] with values in range [0, 255)
-        :returns: degraded image
+        :return: degraded image
         :rtype: numpy.ndarray of shape [h, w] with values in range [0, 255)
         """
         degradations = self.degradations[np.random.choice(len(self.degradations))]

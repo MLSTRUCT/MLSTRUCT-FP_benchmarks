@@ -56,8 +56,8 @@ class Pix2PixFloorPhotoModel(BaseFloorPhotoModel):
         :param image_shape: Input shape
         :param kwargs: Optional keyword arguments
         """
-
         # Create base model
+        # noinspection PyArgumentList
         BaseFloorPhotoModel.__init__(self, data, name, image_shape, **kwargs.get('path', ''))
         self._output_layers = ['discriminator', 'generator']
 

@@ -2176,12 +2176,12 @@ class GenericModel(ABC):
         assert data['version'] == _SESSION_EXPORT_VERSION, _ver
 
         # Assert object class
-        _class = 'Session model class <{0}> is different than current ' \
+        _class = 'Session model class <{0}> is different from current ' \
                  'model class <{1}>'.format(data['class'], self.__class__.__name__)
         assert data['class'] == self.__class__.__name__, _class
 
         # Assert class version
-        _classv = 'Session class version <{0}> is different than current ' \
+        _classv = 'Session class version <{0}> is different from current ' \
                   'model class version <{1}>'.format(data['class_version'], self._version)
         assert data['class_version'] == self._version, _classv
 
@@ -2267,7 +2267,7 @@ class GenericModel(ABC):
         current_compile_config: Dict[str, Any] = self._get_compile_config()
         if current_compile_config != data['compile_config'] and len(current_compile_config.keys()) > 0 \
                 and self._check_compilation:
-            _compile_msg = 'Compile configuration from session is different than the current model'
+            _compile_msg = 'Compile configuration from session is different from the current model'
             # warnings.warn(_compile_msg)
             self._print(_compile_msg + ':')
             for k in current_compile_config.keys():

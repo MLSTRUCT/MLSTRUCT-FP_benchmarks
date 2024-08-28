@@ -144,6 +144,7 @@ class BaseFloorPhotoModel(GenericModel, ABC):
             if self._get_session_data('train_samples') is None:
                 self._register_session_data('train_samples', os.path.join(_PATH_SESSION, f'samples_{random.getrandbits(64)}.npz'))
             samples_f = self._get_session_data('train_samples')
+            # noinspection PyTypeChecker
             np.savez_compressed(samples_f, data=self._samples)
 
     def _custom_load_session(

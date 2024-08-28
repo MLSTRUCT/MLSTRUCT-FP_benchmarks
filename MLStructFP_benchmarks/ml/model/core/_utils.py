@@ -19,6 +19,7 @@ import os
 import tensorflow as tf
 
 
+# noinspection PyTypeChecker
 def load_model_from_session(
         filename: str,
         enable_memory_growth: Optional[bool] = None,

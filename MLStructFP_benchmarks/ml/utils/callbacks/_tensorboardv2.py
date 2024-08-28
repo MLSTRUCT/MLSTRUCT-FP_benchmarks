@@ -189,7 +189,7 @@ class TensorBoardv2(Callback):
             from tensorboard.plugins import projector
         except ImportError:
             raise ImportError('Failed to import TensorBoard. Please make sure that '
-                              'TensorBoard integration is complete."')
+                              'TensorBoard integration is complete.')
         config = projector.ProjectorConfig()
         for layer in self.model.layers:
             if isinstance(layer, embeddings.Embedding):
