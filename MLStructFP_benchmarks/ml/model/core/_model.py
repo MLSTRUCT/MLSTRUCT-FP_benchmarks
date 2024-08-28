@@ -1280,7 +1280,7 @@ class GenericModel(ABC):
                 the generator as they can't be passed easily to children processes.
         :param kwargs: Optional keyword arguments
 
-        :returns:
+        :return:
             A `History` object. Its `History.history` attribute is
             a record of training loss values and metrics values
             at successive epochs, as well as validation loss values
