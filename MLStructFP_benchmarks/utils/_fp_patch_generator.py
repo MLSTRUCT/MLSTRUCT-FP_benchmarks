@@ -90,10 +90,10 @@ class FloorPatchGenerator(object):
         lx, ly = len(delta_x), len(delta_y)
         assert lx * ly != 0, 'deltas for x and y-axis must have at least 1 item'
         if 0 not in delta_x:
-            warn('Delta x must contain 0, which was added automatically')
+            warn('Delta x must contain 0, which has been automatically added')
             delta_x.append(0)
         if 0 not in delta_y:
-            warn('Delta y must contain 0, which was added automatically')
+            warn('Delta y must contain 0, which has been automatically added')
             delta_y.append(0)
         for i in range(lx):
             assert isinstance(delta_x[i], (int, float))

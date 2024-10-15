@@ -348,6 +348,7 @@ class DataFloorPhoto(object):
                 'split': self._split,
 
             }
+            # noinspection PyTypeChecker
             json.dump(data, fp, indent=2)
 
             self._loaded_session = {

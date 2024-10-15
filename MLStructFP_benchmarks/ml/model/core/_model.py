@@ -230,7 +230,7 @@ class GenericModel(ABC):
         self._production = False  # Set model immutable to changes, also test and train data does not exist
         self._path = str(path)
         if self._path != '':
-            self._path += os.path.sep
+            self._path += os.pathsep
         _check_path(self._path)
 
         # Model
@@ -2092,6 +2092,7 @@ class GenericModel(ABC):
             # Save history, last as this is a large data
             data['history'] = self._history
 
+            # noinspection PyTypeChecker
             json.dump(data, fp, indent=2)
             self._loaded_session = {
                 'description': description,
