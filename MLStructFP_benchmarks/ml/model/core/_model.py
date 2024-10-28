@@ -16,18 +16,18 @@ from MLStructFP_benchmarks.ml.utils import file_md5, load_history_from_csv
 from MLStructFP_benchmarks.ml.utils.callbacks import TensorBoardv2, TimeHistory
 from MLStructFP_benchmarks.ml.utils.keras_engine import fit_loop
 
-from keras.backend import is_tensor
-from keras.backend.tensorflow_backend import clear_session
-from keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger, ReduceLROnPlateau
-from keras.callbacks import History
-from keras.engine import training_utils
-from keras.layers import Layer
-from keras.models import model_from_json, Model
-from keras.optimizers import Optimizer
-from keras.utils.generic_utils import slice_arrays
-from keras.utils.layer_utils import count_params
-from keras_tqdm import TQDMNotebookCallback  # https://github.com/bstriner/keras-tqdm
-from tensorflow.python.keras.optimizer_v2.optimizer_v2 import OptimizerV2
+from keras.backend import is_tensor  # type: ignore
+from keras.backend.tensorflow_backend import clear_session  # type: ignore
+from keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger, ReduceLROnPlateau  # type: ignore
+from keras.callbacks import History  # type: ignore
+from keras.engine import training_utils  # type: ignore
+from keras.layers import Layer  # type: ignore
+from keras.models import model_from_json, Model  # type: ignore
+from keras.optimizers import Optimizer  # type: ignore
+from keras.utils.generic_utils import slice_arrays  # type: ignore
+from keras.utils.layer_utils import count_params  # type: ignore
+from keras_tqdm import TQDMNotebookCallback  # type: ignore | https://github.com/bstriner/keras-tqdm
+from tensorflow.python.keras.optimizer_v2.optimizer_v2 import OptimizerV2  # type: ignore
 
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -43,7 +43,7 @@ import os
 import pandas as pd
 import re
 import shutil
-import tensorflow as tf
+import tensorflow as tf  # type: ignore
 import time
 import traceback
 import warnings
@@ -230,7 +230,8 @@ class GenericModel(ABC):
         self._production = False  # Set model immutable to changes, also test and train data does not exist
         self._path = str(path)
         if self._path != '':
-            self._path += os.pathsep
+            # noinspection PyUnresolvedReferences
+            self._path += os.path.sep
         _check_path(self._path)
 
         # Model
@@ -665,9 +666,9 @@ class GenericModel(ABC):
         :return: Memory VRAM used in gb, plus the number of parameters
         """
         try:
-            from keras import backend as k
+            from keras import backend as k  # type: ignore
         except ImportError:
-            from tensorflow.keras import backend as k
+            from tensorflow.keras import backend as k  # type: ignore
 
         shapes_mem_count = 0
         internal_model_mem_count = 0
