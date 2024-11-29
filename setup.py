@@ -18,10 +18,10 @@ requirements = [
     'Keras <= 2.3.1',
     'keras_tqdm <= 2.0.1',
     'matplotlib <= 3.5.3',
-    'MLStructFP >= 0.6.9',
+    'MLStructFP >= 0.7.2',
     'numpy <= 1.18.5',
     'Pillow >= 10.4.0',
-    'plotly >= 5.23.0',
+    'plotly >= 5.24.1',
     'scikit-image <= 0.18.1',
     'scikit-learn >= 1.3.2'
 ]
