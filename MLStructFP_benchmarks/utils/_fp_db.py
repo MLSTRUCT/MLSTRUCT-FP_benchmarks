@@ -132,7 +132,11 @@ class FPDatasetGenerator(object):
                     'respectively')
         assert '/' in path, path_err
 
-        t = len(db.floors)
+        t: int = len(db.floors)  # Total floors
+        if t == 0:
+            print('There are no floors. Process finished')
+            return []
+
         print(f'Total floors to compute in parallel: {t}')
         print(f'Using up to {num_proc}/{cpu_count()} CPUs')
         print(f'Using export path: {path}, image size: {isz}px, patch size: {psz}m')
