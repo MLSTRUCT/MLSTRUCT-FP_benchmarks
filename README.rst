@@ -36,6 +36,29 @@ to download the weights for `model_curves <https://drive.google.com/file/d/18jN3
 `original repo <https://github.com/Vahe1994/Deep-Vectorization-of-Technical-Drawings>`_ for more details.
 
 
+First steps
+-----------
+
+To use this code, you need a Python 3.8 installation. Then, run the following setup (assuming conda manager):
+
+.. code-block:: bash
+
+    # Clone this repo
+    git clone https://github.com/MLSTRUCT/MLSTRUCT-FP_benchmarks.git
+    cd MLSTRUCT-FP_benchmarks
+
+    # Create conda environment & install deps.
+    conda create -n mlstructfp python=3.8
+    conda activate mlstructfp
+    pip install -e .
+    conda install jupyter
+
+    # Run the notebook
+    jupyter notebook
+
+CUDA 10.1 is required to run the trained models.
+
+
 Citing
 ------
 
