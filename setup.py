@@ -69,7 +69,7 @@ setup(
         'Documentation': MLStructFP_benchmarks.__url_documentation__,
         'Source Code': MLStructFP_benchmarks.__url_source_code__
     },
-    python_requires='>=3.8',
+    python_requires='>=3.8, <3.9',
     url=MLStructFP_benchmarks.__url__,
     version=MLStructFP_benchmarks.__version__
 )
