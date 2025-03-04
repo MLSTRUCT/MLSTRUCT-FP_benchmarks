@@ -59,7 +59,7 @@ To use this code, you need a Python 3.8 installation. Then, run the following se
     # Optional: Install CUDA toolkit if Tensorflow cannot detect GPU
     conda install cudatoolkit=10.1 cudnn=7.6 -c conda-forge
 
-CUDA 10.1 is required to run the trained models.
+CUDA 10.1 + cuDNN 7.6.5 is required to run the trained models.
 
 
 Citing
