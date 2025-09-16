@@ -1,6 +1,7 @@
 # Cache
 __pycache__/
 .pytest_cache
+.DS_Store
 
 # IDE
 .idea/
