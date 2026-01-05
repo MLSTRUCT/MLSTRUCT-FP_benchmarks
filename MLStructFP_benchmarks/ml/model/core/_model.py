@@ -1076,6 +1076,7 @@ class GenericModel(ABC):
         # Collect memory
         time.sleep(5)
         gc.collect()
+        return None
 
     def _extend_train_metadata(self) -> None:
         """
@@ -1731,6 +1732,7 @@ class GenericModel(ABC):
             raise RuntimeError(_ERROR_MODEL_TRAINED)
 
         # Use dict
+        init_metrics: Union[dict, list]
         if not as_list:
             reqk: str = ', '.join(self._output_layers)
             total_out: int = len(self._output_layers)
@@ -1790,7 +1792,6 @@ class GenericModel(ABC):
             # Check metrics
             if isinstance(metrics, str):
                 metrics = [metrics]
-            init_metrics: dict
             if metrics is not None:
                 init_metrics = metrics.copy()
             else:
@@ -2197,10 +2198,10 @@ class GenericModel(ABC):
                 current_arch = self._model.to_json(indent=2)
 
                 # Calculate the difference between architectures files
-                arch_file = open(file_arch, 'r')
-                modelj: str = ''
-                for i in arch_file:
-                    modelj += i
+                with open(file_arch, 'r') as arch_file:
+                    modelj: str = ''
+                    for i in arch_file:
+                        modelj += i
                 arch_diff: Iterator[str] = difflib.unified_diff(
                     _normalize_arch_json(modelj).split('\n'),
                     _normalize_arch_json(current_arch).split('\n')

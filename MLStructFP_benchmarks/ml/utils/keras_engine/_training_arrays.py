@@ -116,8 +116,9 @@ def fit_loop(
             count_mode = 'steps'
         else:
             count_mode = 'samples'
-        _callbacks.append(
-            cbks.ProgbarLogger(count_mode, stateful_metrics=model_stateful_metrics_names))
+        _callbacks.append(cbks.ProgbarLogger(  # type: ignore
+            count_mode, stateful_metrics=model_stateful_metrics_names)
+        )
     _callbacks += (callbacks or []) + [model.history]
     callbacks = cbks.CallbackList(_callbacks)
     out_labels = out_labels or []

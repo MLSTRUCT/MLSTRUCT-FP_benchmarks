@@ -50,7 +50,7 @@ def iou_metric(y_true: 'np.ndarray', y_pred: 'np.ndarray', threshold: Union[floa
         y_pred = y_pred.reshape((1, *y_pred.shape))
     for i in range(0, y_true.shape[0]):
         intersect = np.sum(y_true[i, :, :] * y_pred[i, :, :])
-        union = np.sum(y_true[i, :, :]) + np.sum(y_pred[i, :, :]) - intersect + 1e-7
+        union = np.sum(y_true[i, :, :]) + np.sum(y_pred[i, :, :]) - intersect + 1e-7  # type: ignore
         results.append(np.mean((intersect / union)).astype(np.float32))
     return float(np.mean(results))
 

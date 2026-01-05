@@ -87,7 +87,7 @@ def _model_to_dot_v2(
         expand_nested=False,
         dpi=DEFAULT_PLOT_DPI,
         subgraph=False
-) -> 'pydot.Cluster':
+) -> 'pydot.Cluster':  # type: ignore
     """
     Convert a Keras model to dot format.
 
@@ -152,7 +152,7 @@ def _model_to_dot_v2(
                 sub_w_nodes = submodel_wrapper.get_nodes()
                 sub_w_first_node[layer.layer.name] = sub_w_nodes[0]
                 sub_w_last_node[layer.layer.name] = sub_w_nodes[-1]
-                dot.add_subgraph(submodel_wrapper)
+                dot.add_subgraph(submodel_wrapper)  # type: ignore
             else:
                 layer_name = f'{layer_name}({layer.layer.name})'
                 child_class_name = layer.layer.__class__.__name__
@@ -167,7 +167,7 @@ def _model_to_dot_v2(
             sub_n_nodes = submodel_not_wrapper.get_nodes()
             sub_n_first_node[layer.name] = sub_n_nodes[0]
             sub_n_last_node[layer.name] = sub_n_nodes[-1]
-            dot.add_subgraph(submodel_not_wrapper)
+            dot.add_subgraph(submodel_not_wrapper)  # type: ignore
 
         # Create node's label.
         if show_layer_names:
@@ -260,7 +260,7 @@ def _model_to_dot_v1(
         expand_nested=False,
         dpi=DEFAULT_PLOT_DPI,
         subgraph=False
-) -> 'pydot.Cluster':
+) -> 'pydot.Cluster':  # type: ignore
     """
     Convert a Keras model to dot format.
 
@@ -323,7 +323,7 @@ def _model_to_dot_v1(
                 sub_w_nodes[layer.layer.name] = submodel_wrapper.get_nodes()
                 sub_w_first_node[layer.layer.name] = 0
                 sub_w_last_node[layer.layer.name] = -1
-                dot.add_subgraph(submodel_wrapper)
+                dot.add_subgraph(submodel_wrapper)  # type: ignore
             else:
                 layer_name = f'{layer_name}({layer.layer.name})'
                 child_class_name = layer.layer.__class__.__name__
@@ -338,7 +338,7 @@ def _model_to_dot_v1(
             sub_n_nodes[layer.name] = submodel_not_wrapper.get_nodes()
             sub_n_first_node[layer.name] = 0
             sub_n_last_node[layer.name] = -1
-            dot.add_subgraph(submodel_not_wrapper)
+            dot.add_subgraph(submodel_not_wrapper)  # type: ignore
 
         # Create node's label
         if show_layer_names:
@@ -486,3 +486,4 @@ def plot_model_architecture(
             return dimg
         except ImportError:
             pass
+    return None
