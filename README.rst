@@ -31,8 +31,8 @@ jupyter notebook files for more information and a quick start (in order):
 
 The weights for the best model (no_rot_256_50) can be downloaded at
 `this link <https://drive.google.com/file/d/15ufkjoWOFyT0Cm-MEc9zQJCDJIooOgh7/view?usp=sharing>`_. For the vectorization model, follow the following links
-to download the weights for `model_curves <https://drive.google.com/file/d/18jN37pMvEg9S05sLdAznQC5UZDsLz-za/view?usp=sharing>`_ and
-`model_lines <https://drive.google.com/file/d/1Zf085V3783zbrLuTXZxizc7utszI9BZR/view?usp=sharing>`_; check the vectorization
+to download the weights for `model_curves <https://drive.google.com/file/d/1jvdRUjXngOFlXGHlc2BXn2XgvWDTwkBX/view?usp=sharing>`_ and
+`model_lines <https://drive.google.com/file/d/16e2eBR__i8_v5ggcNRDqUR7PGlt6QxAv/view?usp=sharing>`_; check the vectorization
 `original repo <https://github.com/Vahe1994/Deep-Vectorization-of-Technical-Drawings>`_ for more details.
 
 
@@ -84,4 +84,4 @@ Citing
 Author
 ------
 
-`Pablo Pizarro R. <https://ppizarror.com>`_ | 2023 - 2025
+`Pablo Pizarro R. <https://ppizarror.com>`_ | 2023 - 2026
