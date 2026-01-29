@@ -47,11 +47,11 @@ To use this code, you need a Python 3.8 installation. Then, run the following se
     git clone https://github.com/MLSTRUCT/MLSTRUCT-FP_benchmarks.git
     cd MLSTRUCT-FP_benchmarks
 
-    # Create conda environment & install deps.
+    # Create conda environment & install dependencies
     conda create -n mlstructfp python=3.8
     conda activate mlstructfp
     pip install -e .
-    conda install jupyter
+    pip install notebook==7.0.7
 
     # Run the notebook
     jupyter notebook
