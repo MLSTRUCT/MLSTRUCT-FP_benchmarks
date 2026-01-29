@@ -28,6 +28,9 @@ requirements = [
     'scikit-learn >= 1.3.2'
 ]
 
+if os.name == 'nt':  # For notebook issues in py3.8
+    requirements.append('pywinpty >= 2.0.13')
+
 if os.environ.get('GITHUB') != 'true':
     for r in [
         'tensorboard == 2.2.2',
